@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
@@ -44,7 +45,6 @@ export async function GET(req: NextRequest) {
         trustScore: user.trustScore,
         streak: user.streak,
         wallet: user.wallet,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         groups: user.groupMembers.map((m: any) => m.group),
         transactions: user.transactions,
       },
