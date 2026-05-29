@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String   @id @default(cuid())
+  fullName      String
+  email         String   @unique
+  phone         String   @unique
+  password      String
+  avatar        String?
+  isVerified    Boolean  @default(false)
+  trustScore    Int      @default(100)
+  streak        Int      @default(0)
+  role          String   @default("user")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  wallet        Wallet?
+  groupMembers  GroupMember[]
+  transactions  Transaction[]
+  notifications Notification[]
+  messages      Message[]
+}
+
+model Wallet {
+  id        String   @id @default(cuid())
+  balance   Float    @default(0)
+  userId    String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Group {
+  id           String   @id @default(cuid())
+  name         String
+  description  String?
+  contribution Float
+  frequency    String
+  maxMembers   Int
+  status       String   @default("active")
+  inviteCode   String   @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members         GroupMember[]
+  transactions    Transaction[]
+  messages        Message[]
+  payoutSchedules PayoutSchedule[]
+}
+
+model GroupMember {
+  id          String   @id @default(cuid())
+  userId      String
+  groupId     String
+  role        String   @default("member")
+  payoutOrder Int      @default(0)
+  joinedAt    DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id])
+  group Group @relation(fields: [groupId], references: [id])
+
+  @@unique([userId, groupId])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  userId      String
+  groupId     String?
+  type        String
+  amount      Float
+  description String
+  status      String   @default("pending")
+  reference   String?  @unique
+  createdAt   DateTime @default(now())
+
+  user  User   @relation(fields: [userId], references: [id])
+  group Group? @relation(fields: [groupId], references: [id])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  groupId   String
+  senderId  String
+  text      String
+  type      String   @default("text")
+  createdAt DateTime @default(now())
+
+  group  Group @relation(fields: [groupId], references: [id])
+  sender User  @relation(fields: [senderId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model PayoutSchedule {
+  id          String   @id @default(cuid())
+  groupId     String
+  userId      String
+  amount      Float
+  scheduledAt DateTime
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+
+  group Group @relation(fields: [groupId], references: [id])
+}
