@@ -44,6 +44,7 @@ export async function GET(req: NextRequest) {
         trustScore: user.trustScore,
         streak: user.streak,
         wallet: user.wallet,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         groups: user.groupMembers.map((m: any) => m.group),
         transactions: user.transactions,
       },
