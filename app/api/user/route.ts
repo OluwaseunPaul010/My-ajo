@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
         trustScore: user.trustScore,
         streak: user.streak,
         wallet: user.wallet,
-        groups: user.groupMembers.map((m) => m.group),
+        groups: user.groupMembers.map((m: any) => m.group),
         transactions: user.transactions,
       },
     });
