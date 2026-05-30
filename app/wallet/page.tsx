@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
@@ -34,6 +34,26 @@ export default function WalletPage() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState("");
+
+  useEffect(() => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const reference = urlParams.get("reference");
+  
+  if (reference) {
+    fetch("/api/payment/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert(`✅ Wallet funded successfully! ₦${data.amount} added.`);
+          window.location.href = "/wallet";
+        }
+      });
+  }
+}, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
