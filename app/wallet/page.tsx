@@ -35,22 +35,30 @@ export default function WalletPage() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
   const reference = urlParams.get("reference");
-  
-  if (reference) {
+  const trxref = urlParams.get("trxref");
+  const ref = reference || trxref;
+
+  if (ref) {
     fetch("/api/payment/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference }),
+      body: JSON.stringify({ reference: ref }),
     })
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
-          alert(`✅ Wallet funded successfully! ₦${data.amount} added.`);
-          window.location.href = "/wallet";
+          alert(`✅ Wallet funded! ₦${data.amount} added successfully!`);
+          window.history.replaceState({}, "", "/wallet");
+          window.location.reload();
+        } else {
+          alert("Payment verification failed: " + data.error);
         }
+      })
+      .catch((err) => {
+        console.error("Verify error:", err);
       });
   }
 }, []);
