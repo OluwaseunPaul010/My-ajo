@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         email: user.email,
         amount: amount * 100,
-        callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/wallet?payment=success`,
+        callback_url: `https://my-ajo-seven.vercel.app/wallet`,
         metadata: {
           userId: user.id,
           type: "wallet_funding",

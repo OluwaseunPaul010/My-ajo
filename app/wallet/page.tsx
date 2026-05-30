@@ -34,6 +34,45 @@ export default function WalletPage() {
   const [showFundModal, setShowFundModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState("");
+  const [walletBalance, setWalletBalance] = useState(0);
+const [realTransactions, setRealTransactions] = useState<any[]>([]);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setWalletBalance(data.user.wallet?.balance || 0);
+          setRealTransactions(data.user.transactions || []);
+        }
+      });
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const reference = urlParams.get("reference");
+  const trxref = urlParams.get("trxref");
+  const ref = reference || trxref;
+
+  if (ref) {
+    fetch("/api/payment/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ reference: ref }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          alert(`✅ Wallet funded! ₦${data.amount} added!`);
+          window.history.replaceState({}, "", "/wallet");
+          window.location.reload();
+        }
+      });
+  }
+}, []);
 
 useEffect(() => {
   const urlParams = new URLSearchParams(window.location.search);
@@ -132,7 +171,7 @@ useEffect(() => {
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <p className="text-emerald-100 text-sm mb-1">Available Balance</p>
-                  <h2 className="text-4xl font-bold">₦125,000.00</h2>
+                  <h2 className="text-4xl font-bold">₦{walletBalance.toLocaleString()}.00</h2>
                 </div>
                 <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center">
                   <Wallet className="w-6 h-6 text-white" />
