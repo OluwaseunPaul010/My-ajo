@@ -64,13 +64,15 @@ useEffect(() => {
       body: JSON.stringify({ reference: ref }),
     })
       .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          alert(`✅ Wallet funded! ₦${data.amount} added!`);
-          window.history.replaceState({}, "", "/wallet");
-          window.location.reload();
-        }
-      });
+     .then((data) => {
+  if (data.success) {
+    alert(`✅ Wallet funded! ₦${data.amount} added!`);
+    window.history.replaceState({}, "", "/wallet");
+    window.location.reload();
+  } else {
+    alert("Payment verification failed: " + (data.message || data.error));
+  }
+});
   }
 }, []);
 

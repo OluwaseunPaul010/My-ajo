@@ -20,28 +20,27 @@ export async function POST(req: NextRequest) {
 
     const data = await response.json();
 
-    console.log("Paystack verify response:", JSON.stringify(data));
-
-    if (!data.status) {
-      return NextResponse.json({ error: "Verification failed", details: data }, { status: 400 });
-    }
-
-    if (data.data.status !== "success") {
-      return NextResponse.json({ error: "Payment not successful", status: data.data.status }, { status: 400 });
+    if (!data.status || data.data.status !== "success") {
+      return NextResponse.json({ 
+        error: "Payment not successful", 
+        details: data 
+      }, { status: 400 });
     }
 
     const amount = data.data.amount / 100;
     const userId = data.data.metadata?.userId;
 
     if (!userId) {
-      return NextResponse.json({ error: "User ID not found in metadata" }, { status: 400 });
+      return NextResponse.json({ 
+        error: "User ID not found in metadata" 
+      }, { status: 400 });
     }
 
-    const existingTransaction = await prisma.transaction.findUnique({
+    const existing = await prisma.transaction.findFirst({
       where: { reference },
     });
 
-    if (existingTransaction) {
+    if (existing) {
       return NextResponse.json({ success: true, amount, message: "Already processed" });
     }
 
@@ -64,6 +63,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, amount });
   } catch (error) {
     console.error("Verify error:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json({ 
+      error: "Something went wrong",
+      message: String(error)
+    }, { status: 500 });
   }
 }
