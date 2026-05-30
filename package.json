@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --turbopack",
-  "build": "prisma generate && next build",
-  "start": "next start",
-  "lint": "next lint"
-},
+    "dev": "next dev --turbopack",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",
+    "@paystack/inline-js": "^2.22.9",
     "@prisma/adapter-neon": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "autoprefixer": "^10.5.0",

@@ -238,9 +238,32 @@ export default function WalletPage() {
                   ))}
                 </div>
               </div>
-              <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
-                Proceed to Pay
-              </button>
+             <button
+  onClick={async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !amount) return;
+    try {
+      const res = await fetch("/api/payment/initialize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = data.authorizationUrl;
+      } else {
+        alert(data.error || "Payment failed");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  }}
+  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
+  Proceed to Pay with Paystack
+</button>
             </div>
           </motion.div>
         </div>
