@@ -43,6 +43,20 @@ useEffect(() => {
   if (stored) {
     setUser(JSON.parse(stored));
   }
+
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      });
+  }
 }, []);
 
   return (
@@ -128,7 +142,7 @@ useEffect(() => {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
-              { label: "Wallet Balance", value: "₦125,000.00", sub: "Available Balance", icon: Wallet },
+              { label: "Wallet Balance", value: `₦${(user?.wallet?.balance || 0).toLocaleString()}.00`, sub: "Available Balance", icon: Wallet },
               { label: "Total Contributions", value: "₦1,250,000.00", sub: "All time", icon: TrendingUp },
               { label: "Upcoming Payout", value: "₦200,000.00", sub: "To Tunde · in 2 days", icon: Zap },
               { label: "Contribution Streak", value: "16 Weeks 🔥", sub: "Amazing! Keep it up", icon: Target },
