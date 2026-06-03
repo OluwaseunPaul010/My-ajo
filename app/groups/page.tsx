@@ -80,15 +80,9 @@ export default function GroupsPage() {
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
                 <div className="text-xs text-emerald-500">Premium Member</div>
               </div>
-              <button
-  onClick={() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/auth/login";
-  }}
-  className="text-gray-400 hover:text-red-500 transition-colors">
-  <LogOut className="w-4 h-4" />
-</button>
+              <button className="text-gray-400 hover:text-red-500 transition-colors">
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -168,13 +162,7 @@ export default function GroupsPage() {
                 <p className="text-sm">Create or join a savings group to get started.</p>
               </div>
             ) : (
-             {user?.groups?.length === 0 ? (
-  <div className="col-span-3 text-center py-8 text-gray-400">
-    <Users className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
-    <p className="text-sm font-medium text-gray-500">No groups yet</p>
-    <p className="text-xs">Create or join a savings group!</p>
-  </div>
-) : (user?.groups || groups).map((group: any, i: number) => (
+              realGroups.map((group: any, i: number) => (
                 <motion.div key={i}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
