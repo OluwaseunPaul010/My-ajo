@@ -38,6 +38,7 @@ export default function DashboardPage() {
  const [sidebarOpen, setSidebarOpen] = useState(false);
 const [user, setUser] = useState<any>(null);
 const [realTransactions, setRealTransactions] = useState<any[]>([]);
+const [unreadCount, setUnreadCount] = useState(0);
 
 useEffect(() => {
   const token = localStorage.getItem("token");
@@ -49,6 +50,13 @@ useEffect(() => {
       .then((data) => {
         if (data.success) setRealTransactions(data.transactions);
       });
+      fetch("/api/notifications", {
+  headers: { Authorization: `Bearer ${token}` },
+})
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.success) setUnreadCount(data.unreadCount);
+  });
   }
 }, []);
 
@@ -140,14 +148,20 @@ useEffect(() => {
             <Menu className="w-6 h-6 text-gray-600" />
           </button>
           <div>
-<h1 className="text-lg font-bold text-gray-900">Good morning, {user?.fullName?.split(" ")[0] || "there"} 👋</h1>
+<h1 className="text-lg font-bold text-gray-900">
+  {new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening"}, {user?.fullName?.split(" ")[0] || "there"} 👋
+</h1>
             <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your savings today.</p>
           </div>
           <div className="ml-auto flex items-center gap-3">
-            <button className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <a href="/notifications" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors">
+  <Bell className="w-5 h-5" />
+  {unreadCount > 0 && (
+    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
+      {unreadCount}
+    </span>
+  )}
+</a>
             <a href="/wallet" className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
               <Wallet className="w-4 h-4" /> Fund Wallet
             </a>
@@ -187,66 +201,86 @@ useEffect(() => {
 
             {/* Contribution Overview */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-900 mb-4">My Contribution Overview</h2>
-              <div className="flex items-center justify-center mb-4">
-                <div className="relative w-32 h-32">
-                  <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-                    <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="12" strokeDasharray="251 314" strokeLinecap="round" />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-2xl font-bold text-gray-900">8/10</span>
-                    <span className="text-xs text-gray-400">Completed</span>
-                  </div>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {[
-                  { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
-                  { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
-                  { label: "Missed", value: "0", color: "bg-red-400" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${item.color}`} />
-                      <span className="text-gray-600">{item.label}</span>
-                    </div>
-                    <span className="font-medium text-gray-900">{item.value}</span>
-                  </div>
-                ))}
-              </div>
+  <h2 className="text-base font-semibold text-gray-900 mb-4">My Contribution Overview</h2>
+  {user?.groups?.length === 0 || !user?.groups ? (
+    <div className="text-center py-8 text-gray-400">
+      <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+        <Target className="w-8 h-8 text-emerald-300" />
+      </div>
+      <p className="text-sm font-medium text-gray-500">No contributions yet</p>
+      <p className="text-xs text-gray-400 mt-1">Join a group to start contributing!</p>
+      <a href="/groups" className="mt-3 inline-block text-xs text-emerald-500 font-medium hover:underline">
+        Browse Groups →
+      </a>
+    </div>
+  ) : (
+    <>
+      <div className="flex items-center justify-center mb-4">
+        <div className="relative w-32 h-32">
+          <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" strokeWidth="12" />
+            <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="12" strokeDasharray="251 314" strokeLinecap="round" />
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-2xl font-bold text-gray-900">8/10</span>
+            <span className="text-xs text-gray-400">Completed</span>
+          </div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {[
+          { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
+          { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
+          { label: "Missed", value: "0", color: "bg-red-400" },
+        ].map((item, i) => (
+          <div key={i} className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-full ${item.color}`} />
+              <span className="text-gray-600">{item.label}</span>
+            </div>
+            <span className="font-medium text-gray-900">{item.value}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  )}
+</div>
               <div className="mt-4 p-3 bg-emerald-50 rounded-xl text-xs text-emerald-700 font-medium">
                 🎉 Great job! Keep your streak alive.
               </div>
             </div>
 
             {/* Payout Rotation */}
-            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Payout Rotation</h2>
-                <a href="#" className="text-xs text-emerald-500 font-medium">View Full</a>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { name: "Tunde Adeyemi", date: "May 1, 2025", status: "Paid", color: "text-emerald-500 bg-emerald-50" },
-                  { name: "Chioma Okafor", date: "May 15 (in 2 days)", status: "Upcoming", color: "text-amber-500 bg-amber-50" },
-                  { name: "Emeka Nwosu", date: "May 29, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
-                  { name: "Adesola Bankole", date: "June 12, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <span className="text-sm text-gray-400 w-4">{i + 1}</span>
-                    <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold text-xs">
-                      {item.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
-                      <div className="text-xs text-gray-400">{item.date}</div>
-                    </div>
-                    <span className={`text-xs px-2 py-1 rounded-lg font-medium ${item.color}`}>{item.status}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+           <div className="space-y-3">
+  {user?.groups?.length === 0 || !user?.groups ? (
+    <div className="text-center py-6 text-gray-400">
+      <Zap className="w-8 h-8 mx-auto mb-2 text-emerald-300" />
+      <p className="text-sm font-medium text-gray-500">No payout rotation yet</p>
+      <p className="text-xs">Join a group to see rotation!</p>
+    </div>
+  ) : (
+    <>
+      {[
+        { name: "Tunde Adeyemi", date: "May 1, 2025", status: "Paid", color: "text-emerald-500 bg-emerald-50" },
+        { name: "Chioma Okafor", date: "May 15 (in 2 days)", status: "Upcoming", color: "text-amber-500 bg-amber-50" },
+        { name: "Emeka Nwosu", date: "May 29, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
+        { name: "Adesola Bankole", date: "June 12, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
+      ].map((item, i) => (
+        <div key={i} className="flex items-center gap-3">
+          <span className="text-sm text-gray-400 w-4">{i + 1}</span>
+          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold text-xs">
+            {item.name.charAt(0)}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
+            <div className="text-xs text-gray-400">{item.date}</div>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-lg font-medium ${item.color}`}>{item.status}</span>
+        </div>
+      ))}
+    </>
+  )}
+</div>
 
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
