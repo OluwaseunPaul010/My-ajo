@@ -59,7 +59,14 @@ export async function POST(req: NextRequest) {
         reference,
       },
     });
-
+    await prisma.notification.create({
+  data: {
+    userId,
+    title: "Wallet Funded Successfully! 💰",
+    message: `Your wallet has been credited with ₦${amount.toLocaleString()} via Paystack.`,
+    type: "payment",
+  },
+});
     return NextResponse.json({ success: true, amount });
   } catch (error) {
     console.error("Verify error:", error);

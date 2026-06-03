@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
       },
     });
     await prisma.notification.create({
-  data: {
+    data: {
     userId: user.id,
     title: "Welcome to My Ajo! 🎉",
     message: "Your account has been created successfully. Start saving by joining or creating a group!",
