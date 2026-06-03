@@ -161,9 +161,9 @@ useEffect(() => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             {[
               { label: "Wallet Balance", value: `₦${(user?.wallet?.balance || 0).toLocaleString()}.00`, sub: "Available Balance", icon: Wallet },
-              { label: "Total Contributions", value: "₦1,250,000.00", sub: "All time", icon: TrendingUp },
-              { label: "Upcoming Payout", value: "₦200,000.00", sub: "To Tunde · in 2 days", icon: Zap },
-              { label: "Contribution Streak", value: "16 Weeks 🔥", sub: "Amazing! Keep it up", icon: Target },
+              { label: "Total Contributions", value: `₦${realTransactions.filter((t:any) => t.type === "debit").reduce((s:number, t:any) => s + t.amount, 0).toLocaleString()}.00`, sub: "All time", icon: TrendingUp },
+              { label: "Upcoming Payout", value: "₦0.00", sub: "No upcoming payout", icon: Zap },
+              { label: "Contribution Streak", value: `${user?.streak || 0} Weeks`, sub: user?.streak > 0 ? "Amazing! Keep it up 🔥" : "Start contributing!", icon: Target },
             ].map((card, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -287,8 +287,14 @@ useEffect(() => {
               </a>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {groups.map((group, i) => (
-                <div key={i} className="border border-gray-100 rounded-xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all">
+              {user?.groups?.length === 0 ? (
+  <div className="col-span-3 text-center py-8 text-gray-400">
+    <Users className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
+    <p className="text-sm font-medium text-gray-500">No groups yet</p>
+    <p className="text-xs">Create or join a savings group!</p>
+  </div>
+) : (user?.groups || groups).map((group: any, i: number) => (
+  <div key={i} className="border border-gray-100 rounded-xl p-4 hover:border-emerald-200 hover:shadow-sm transition-all">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center">
                       <Users className="w-5 h-5 text-emerald-500" />
@@ -317,7 +323,13 @@ useEffect(() => {
               <a href="#" className="text-xs text-emerald-500 font-medium">View All</a>
             </div>
             <div className="space-y-3">
-              {(realTransactions.length > 0 ? realTransactions : []).slice(0, 5).map((tx: any, i: number) => (
+              {realTransactions.length === 0 ? (
+  <div className="text-center py-8 text-gray-400">
+    <TrendingUp className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
+    <p className="text-sm font-medium text-gray-500">No transactions yet</p>
+    <p className="text-xs">Fund your wallet to get started!</p>
+  </div>
+) : realTransactions.slice(0, 5).map((tx: any, i: number) => (
   <div key={i} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors">
     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
       {tx.type === "credit"
