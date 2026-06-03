@@ -98,9 +98,15 @@ export default function TransactionsPage() {
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
                 <div className="text-xs text-emerald-500">Premium Member</div>
               </div>
-              <button className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
+              <button
+  onClick={() => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/auth/login";
+  }}
+  className="text-gray-400 hover:text-red-500 transition-colors">
+  <LogOut className="w-4 h-4" />
+</button>
             </div>
           </div>
         </div>

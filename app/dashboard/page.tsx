@@ -37,12 +37,24 @@ const groups = [
 export default function DashboardPage() {
  const [sidebarOpen, setSidebarOpen] = useState(false);
 const [user, setUser] = useState<any>(null);
+const [realTransactions, setRealTransactions] = useState<any[]>([]);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/transactions", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setRealTransactions(data.transactions);
+      });
+  }
+}, []);
 
 useEffect(() => {
   const stored = localStorage.getItem("user");
-  if (stored) {
-    setUser(JSON.parse(stored));
-  }
+  if (stored) setUser(JSON.parse(stored));
 
   const token = localStorage.getItem("token");
   if (token) {
@@ -103,9 +115,15 @@ useEffect(() => {
 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
                 <div className="text-xs text-emerald-500">Premium Member</div>
               </div>
-              <button className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
+              <button
+               onClick={() => {
+                localStorage.removeItem("token");
+                 localStorage.removeItem("user");
+                 window.location.href = "/auth/login";
+  }}
+            className="text-gray-400 hover:text-red-500 transition-colors">
+         <LogOut className="w-4 h-4" />
+</button>
             </div>
           </div>
         </div>
@@ -299,23 +317,31 @@ useEffect(() => {
               <a href="#" className="text-xs text-emerald-500 font-medium">View All</a>
             </div>
             <div className="space-y-3">
-              {transactions.map((tx, i) => (
-                <div key={i} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
-                    {tx.type === "credit"
-                      ? <ArrowDownLeft className="w-5 h-5 text-emerald-500" />
-                      : <ArrowUpRight className="w-5 h-5 text-red-400" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900">{tx.desc}</div>
-                    <div className="text-xs text-gray-400">{tx.group} · {tx.date}</div>
-                  </div>
-                  <div className="text-right">
-                    <div className={`text-sm font-semibold ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>{tx.amount}</div>
-                    <div className={`text-xs ${tx.status === "completed" ? "text-emerald-400" : "text-amber-400"}`}>{tx.status}</div>
-                  </div>
-                </div>
-              ))}
+              {(realTransactions.length > 0 ? realTransactions : []).slice(0, 5).map((tx: any, i: number) => (
+  <div key={i} className="flex items-center gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors">
+    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
+      {tx.type === "credit"
+        ? <ArrowDownLeft className="w-5 h-5 text-emerald-500" />
+        : <ArrowUpRight className="w-5 h-5 text-red-400" />}
+    </div>
+    <div className="flex-1 min-w-0">
+      <div className="text-sm font-medium text-gray-900">{tx.description}</div>
+      <div className="text-xs text-gray-400">
+        {new Date(tx.createdAt).toLocaleDateString("en-NG", {
+          day: "numeric", month: "short", year: "numeric"
+        })}
+      </div>
+    </div>
+    <div className="text-right">
+      <div className={`text-sm font-semibold ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>
+        {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
+      </div>
+      <div className={`text-xs ${tx.status === "completed" ? "text-emerald-400" : "text-amber-400"}`}>
+        {tx.status}
+      </div>
+    </div>
+  </div>
+))}
             </div>
           </div>
 
