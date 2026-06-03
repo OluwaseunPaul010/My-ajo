@@ -24,7 +24,7 @@ export default function LoginPage() {
   document.cookie = `token=${data.token}; path=/; max-age=604800`;
   window.location.href = "/dashboard";
 }
-    } else {
+    else {
       alert(data.error || "Login failed");
     }
   } catch {

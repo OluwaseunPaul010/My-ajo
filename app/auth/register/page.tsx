@@ -29,7 +29,7 @@ const handleSubmit = async (e: React.FormEvent) => {
   document.cookie = `token=${data.token}; path=/; max-age=604800`;
   window.location.href = "/dashboard";
 }
-    } else {
+     else {
       alert(data.error || "Registration failed");
     }
   } catch {
