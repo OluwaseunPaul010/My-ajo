@@ -19,9 +19,11 @@ export default function LoginPage() {
     });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      window.location.href = "/dashboard";
+  localStorage.setItem("token", data.token);
+  localStorage.setItem("user", JSON.stringify(data.user));
+  document.cookie = `token=${data.token}; path=/; max-age=604800`;
+  window.location.href = "/dashboard";
+}
     } else {
       alert(data.error || "Login failed");
     }
