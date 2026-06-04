@@ -23,13 +23,12 @@ const handleSubmit = async (e: React.FormEvent) => {
       body: JSON.stringify(form),
     });
     const data = await res.json();
-   if (data.success) {
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify(data.user));
-  document.cookie = `token=${data.token}; path=/; max-age=604800`;
-  window.location.href = "/dashboard";
-}
-     else {
+    if (data.success) {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      window.location.href = "/dashboard";
+    } else {
       alert(data.error || "Registration failed");
     }
   } catch {

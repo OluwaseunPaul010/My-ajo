@@ -8,7 +8,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ email: "", password: "" });
 
-  const handleSubmit = async (e: React.FormEvent) => {
+const handleSubmit = async (e: React.FormEvent) => {
   e.preventDefault();
   setLoading(true);
   try {
@@ -19,12 +19,11 @@ export default function LoginPage() {
     });
     const data = await res.json();
     if (data.success) {
-  localStorage.setItem("token", data.token);
-  localStorage.setItem("user", JSON.stringify(data.user));
-  document.cookie = `token=${data.token}; path=/; max-age=604800`;
-  window.location.href = "/dashboard";
-}
-    else {
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      document.cookie = `token=${data.token}; path=/; max-age=604800`;
+      window.location.href = "/dashboard";
+    } else {
       alert(data.error || "Login failed");
     }
   } catch {
