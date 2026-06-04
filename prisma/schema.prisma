@@ -25,6 +25,7 @@ model User {
   transactions  Transaction[]
   notifications Notification[]
   messages      Message[]
+  goals        Goal[]
 }
 
 model Wallet {
@@ -117,4 +118,18 @@ model PayoutSchedule {
   createdAt   DateTime @default(now())
 
   group Group @relation(fields: [groupId], references: [id])
+}
+
+model         Goal {
+  id          String   @id @default(cuid())
+  userId      String
+  title       String
+  targetAmount Float
+  savedAmount  Float   @default(0)
+  deadline    DateTime?
+  status      String   @default("active")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
 }
