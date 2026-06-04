@@ -14,7 +14,7 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
@@ -84,48 +84,38 @@ export default function DashboardPage() {
               <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
+
           <nav className="flex-1 px-4 py-6 space-y-1">
             {navItems.map((item, i) => (
               <a key={i} href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${item.active ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-emerald-500"}`}>
                 <item.icon className="w-5 h-5" />
                 {item.label}
-                {item.badge && (
-                  <span className={`ml-auto text-xs px-2 py-0.5 rounded-full ${item.active ? "bg-white text-emerald-500" : "bg-emerald-100 text-emerald-600"}`}>
-                    {item.badge}
-                  </span>
-                )}
-                <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors">
-  <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-    {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
-  </div>
-  <div className="flex-1 min-w-0">
-    <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-    <div className="text-xs text-emerald-500">View Profile</div>
-  </div>
-</a>
               </a>
             ))}
           </nav>
+
           <div className="px-4 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group">
               <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+                <div className="text-xs text-emerald-500 group-hover:underline">View Profile</div>
               </div>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
-                  window.location.href = "/auth/login";
-                }}
-                className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            </a>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/auth/login";
+              }}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -133,6 +123,7 @@ export default function DashboardPage() {
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
 
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
             <Menu className="w-6 h-6 text-gray-600" />
@@ -213,8 +204,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { label: "Paid", value: "0", color: "bg-emerald-500" },
-                      { label: "Pending", value: "0", color: "bg-amber-400" },
+                      { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
+                      { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
                       { label: "Missed", value: "0", color: "bg-red-400" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
