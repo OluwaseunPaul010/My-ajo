@@ -13,7 +13,7 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-  { icon: MessageCircle, label: "Messages", href: "/chat" },
+{ icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support", active: true },
   { icon: Settings, label: "Settings", href: "/settings" },

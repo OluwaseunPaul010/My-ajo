@@ -12,75 +12,14 @@ const navItems = [
   { icon: Users, label: "My Groups", href: "/groups" },
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
-  { icon: Bell, label: "Reminders", href: "/reminders", active: true, badge: 2 },
-  { icon: MessageCircle, label: "Messages", href: "/chat", badge: 3 },
+  { icon: Bell, label: "Reminders", href: "/reminders" },
+{ icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-const reminders = [
-  {
-    id: 1,
-    type: "contribution",
-    title: "Contribution Reminder",
-    group: "Family Ajo",
-    desc: "Your weekly contribution of ₦20,000 is due tomorrow.",
-    time: "Due Tomorrow",
-    status: "active",
-    urgent: true,
-    icon: Bell,
-    color: "emerald",
-  },
-  {
-    id: 2,
-    type: "payout",
-    title: "Payout Day 🎉",
-    group: "Family Ajo",
-    desc: "You are next in the payout rotation! ₦200,000 coming in 2 days.",
-    time: "In 2 days",
-    status: "upcoming",
-    urgent: false,
-    icon: Zap,
-    color: "amber",
-  },
-  {
-    id: 3,
-    type: "deadline",
-    title: "Contribution Deadline",
-    group: "Market Women Ajo",
-    desc: "Last chance to make your contribution of ₦16,000 for this cycle.",
-    time: "In 5 days",
-    status: "upcoming",
-    urgent: false,
-    icon: Clock,
-    color: "blue",
-  },
-  {
-    id: 4,
-    type: "contribution",
-    title: "Monthly Contribution",
-    group: "Office Savings",
-    desc: "Your monthly contribution of ₦10,000 is due next week.",
-    time: "In 7 days",
-    status: "upcoming",
-    urgent: false,
-    icon: Calendar,
-    color: "purple",
-  },
-  {
-    id: 5,
-    type: "missed",
-    title: "Missed Contribution Alert",
-    group: "Office Savings",
-    desc: "You missed last month's contribution. Please contact your group admin.",
-    time: "3 days ago",
-    status: "missed",
-    urgent: true,
-    icon: AlertCircle,
-    color: "red",
-  },
-];
+const reminders: any[] = [];
 
 export default function RemindersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -135,15 +74,18 @@ export default function RemindersPage() {
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
             <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">CO</div>
+              <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+  {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
+</div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-900 truncate">Chioma Okafor</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+               <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
+              <div className="text-xs text-emerald-500">Premium Member</div>
               </div>
-              <button
+             <button
   onClick={() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
+    document.cookie = "token=; path=/; max-age=0";
     window.location.href = "/auth/login";
   }}
   className="text-gray-400 hover:text-red-500 transition-colors">
