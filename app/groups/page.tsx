@@ -191,7 +191,17 @@ export default function GroupsPage() {
                       </div>
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Invite Code</div>
-                        <div className="text-xs font-mono font-semibold text-emerald-600">{group.inviteCode}</div>
+                        <div className="flex items-center gap-2">
+  <div className="text-xs font-mono font-semibold text-emerald-600">{group.inviteCode}</div>
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(group.inviteCode);
+      alert("✅ Invite code copied!");
+    }}
+    className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg transition-colors">
+    Copy
+  </button>
+</div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Frequency</div>
