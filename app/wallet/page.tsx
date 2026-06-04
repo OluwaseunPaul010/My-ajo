@@ -12,103 +12,81 @@ const navItems = [
   { icon: Users, label: "My Groups", href: "/groups" },
   { icon: Wallet, label: "Wallet", href: "/wallet", active: true },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
- { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: Bell, label: "Reminders", href: "/reminders" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-const [realTransactions, setRealTransactions] = useState<any[]>([]);
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    fetch("/api/transactions", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) setRealTransactions(data.transactions);
-      });
-  }
-}, []);
-
 export default function WalletPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [realTransactions, setRealTransactions] = useState<any[]>([]);
+  const [totalIn, setTotalIn] = useState(0);
+  const [totalOut, setTotalOut] = useState(0);
   const [activeTab, setActiveTab] = useState("all");
   const [showFundModal, setShowFundModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [amount, setAmount] = useState("");
-  const [walletBalance, setWalletBalance] = useState(0);
-const [realTransactions, setRealTransactions] = useState<any[]>([]);
 
-useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    fetch("/api/user", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setWalletBalance(data.user.wallet?.balance || 0);
-          setRealTransactions(data.user.transactions || []);
-        }
-      });
-  }
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) setUser(JSON.parse(stored));
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const reference = urlParams.get("reference");
-  const trxref = urlParams.get("trxref");
-  const ref = reference || trxref;
-
-  if (ref) {
-    fetch("/api/payment/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference: ref }),
-    })
-      .then((res) => res.json())
-     .then((data) => {
-  if (data.success) {
-    alert(`✅ Wallet funded! ₦${data.amount} added!`);
-    window.history.replaceState({}, "", "/wallet");
-    window.location.reload();
-  } else {
-    alert("Payment verification failed: " + (data.message || data.error));
-  }
-});
-  }
-}, []);
-
-useEffect(() => {
-  const urlParams = new URLSearchParams(window.location.search);
-  const reference = urlParams.get("reference");
-  const trxref = urlParams.get("trxref");
-  const ref = reference || trxref;
-
-  if (ref) {
-    fetch("/api/payment/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reference: ref }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          alert(`✅ Wallet funded! ₦${data.amount} added successfully!`);
-          window.history.replaceState({}, "", "/wallet");
-          window.location.reload();
-        } else {
-          alert("Payment verification failed: " + data.error);
-        }
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetch("/api/user", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch((err) => {
-        console.error("Verify error:", err);
-      });
-  }
-}, []);
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setWalletBalance(data.user.wallet?.balance || 0);
+          }
+        });
+
+      fetch("/api/transactions", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setRealTransactions(data.transactions);
+            setTotalIn(data.totalIn);
+            setTotalOut(data.totalOut);
+          }
+        });
+    }
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const reference = urlParams.get("reference");
+    const trxref = urlParams.get("trxref");
+    const ref = reference || trxref;
+
+    if (ref) {
+      fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reference: ref }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            alert(`✅ Wallet funded! ₦${data.amount} added!`);
+            window.history.replaceState({}, "", "/wallet");
+            window.location.reload();
+          } else {
+            alert("Payment verification failed: " + data.error);
+          }
+        });
+    }
+  }, []);
+
+  const filtered = activeTab === "all"
+    ? realTransactions
+    : realTransactions.filter((tx) => tx.type === activeTab);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -130,28 +108,28 @@ useEffect(() => {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${item.active ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-emerald-500"}`}>
                 <item.icon className="w-5 h-5" />
                 {item.label}
-                {item.badge && (
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">{item.badge}</span>
-                )}
               </a>
             ))}
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
             <div className="flex items-center gap-3 px-3 py-2">
-              <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">CO</div>
+              <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
+              </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold text-gray-900 truncate">Chioma Okafor</div>
+                <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
                 <div className="text-xs text-emerald-500">Premium Member</div>
               </div>
               <button
-  onClick={() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    window.location.href = "/auth/login";
-  }}
-  className="text-gray-400 hover:text-red-500 transition-colors">
-  <LogOut className="w-4 h-4" />
-</button>
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  localStorage.removeItem("user");
+                  document.cookie = "token=; path=/; max-age=0";
+                  window.location.href = "/auth/login";
+                }}
+                className="text-gray-400 hover:text-red-500 transition-colors">
+                <LogOut className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
@@ -159,7 +137,6 @@ useEffect(() => {
 
       {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
@@ -172,13 +149,11 @@ useEffect(() => {
         </header>
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
-
           {/* Wallet Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white mb-8 relative overflow-hidden"
-          >
+            className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-8 text-white mb-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-32 translate-x-32" />
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-24 -translate-x-24" />
             <div className="relative z-10">
@@ -192,13 +167,11 @@ useEffect(() => {
                 </div>
               </div>
               <div className="flex gap-3">
-                <button
-                  onClick={() => setShowFundModal(true)}
+                <button onClick={() => setShowFundModal(true)}
                   className="bg-white text-emerald-600 px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-colors flex items-center gap-2">
                   <Plus className="w-4 h-4" /> Fund Wallet
                 </button>
-                <button
-                  onClick={() => setShowWithdrawModal(true)}
+                <button onClick={() => setShowWithdrawModal(true)}
                   className="bg-white/20 text-white px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-white/30 transition-colors flex items-center gap-2">
                   <ArrowUpRight className="w-4 h-4" /> Withdraw
                 </button>
@@ -209,9 +182,9 @@ useEffect(() => {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Total Funded", value: "₦1,500,000", icon: ArrowDownLeft, color: "text-emerald-500 bg-emerald-100" },
-              { label: "Total Withdrawn", value: "₦850,000", icon: ArrowUpRight, color: "text-red-400 bg-red-50" },
-              { label: "Total Contributions", value: "₦1,250,000", icon: TrendingUp, color: "text-blue-500 bg-blue-50" },
+              { label: "Total Funded", value: `₦${totalIn.toLocaleString()}`, icon: ArrowDownLeft, color: "text-emerald-500 bg-emerald-100" },
+              { label: "Total Withdrawn", value: `₦${totalOut.toLocaleString()}`, icon: ArrowUpRight, color: "text-red-400 bg-red-50" },
+              { label: "Total Transactions", value: realTransactions.length.toString(), icon: TrendingUp, color: "text-blue-500 bg-blue-50" },
             ].map((stat, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -239,8 +212,7 @@ useEffect(() => {
               </div>
               <div className="flex gap-2">
                 {["all", "credit", "debit"].map((tab) => (
-                  <button key={tab}
-                    onClick={() => setActiveTab(tab)}
+                  <button key={tab} onClick={() => setActiveTab(tab)}
                     className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
                     {tab === "all" ? "All" : tab === "credit" ? "Money In" : "Money Out"}
                   </button>
@@ -248,9 +220,14 @@ useEffect(() => {
               </div>
             </div>
             <div className="divide-y divide-gray-50">
-              {realTransactions
-                .filter(tx => activeTab === "all" || tx.type === activeTab)
-                .map((tx, i) => (
+              {filtered.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <TrendingUp className="w-10 h-10 mx-auto mb-2 text-emerald-300" />
+                  <p className="text-sm font-medium text-gray-500">No transactions yet</p>
+                  <p className="text-xs">Fund your wallet to get started!</p>
+                </div>
+              ) : (
+                filtered.map((tx: any, i: number) => (
                   <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
                       {tx.type === "credit"
@@ -258,15 +235,24 @@ useEffect(() => {
                         : <ArrowUpRight className="w-5 h-5 text-red-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{tx.desc}</div>
-                      <div className="text-xs text-gray-400">{tx.group} · {tx.date}</div>
+                      <div className="text-sm font-medium text-gray-900">{tx.description}</div>
+                      <div className="text-xs text-gray-400">
+                        {new Date(tx.createdAt).toLocaleDateString("en-NG", {
+                          day: "numeric", month: "short", year: "numeric"
+                        })}
+                      </div>
                     </div>
                     <div className="text-right">
-                      <div className={`text-sm font-semibold ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>{tx.amount}</div>
-                      <div className={`text-xs ${tx.status === "completed" ? "text-emerald-400" : "text-amber-400"}`}>{tx.status}</div>
+                      <div className={`text-sm font-semibold ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>
+                        {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
+                      </div>
+                      <div className={`text-xs ${tx.status === "completed" ? "text-emerald-400" : "text-amber-400"}`}>
+                        {tx.status}
+                      </div>
                     </div>
                   </div>
-                ))}
+                ))
+              )}
             </div>
           </div>
         </main>
@@ -288,20 +274,16 @@ useEffect(() => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                <input
-                  type="number"
-                  value={amount}
+                <input type="number" value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="₦0.00"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
-                />
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {["5,000", "10,000", "20,000", "50,000", "100,000", "200,000"].map((val) => (
-                  <button key={val}
-                    onClick={() => setAmount(val.replace(",", ""))}
+                {["5000", "10000", "20000", "50000", "100000", "200000"].map((val) => (
+                  <button key={val} onClick={() => setAmount(val)}
                     className="py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:border-emerald-500 hover:text-emerald-500 transition-colors">
-                    ₦{val}
+                    ₦{parseInt(val).toLocaleString()}
                   </button>
                 ))}
               </div>
@@ -319,32 +301,32 @@ useEffect(() => {
                   ))}
                 </div>
               </div>
-             <button
-  onClick={async () => {
-    const token = localStorage.getItem("token");
-    if (!token || !amount) return;
-    try {
-      const res = await fetch("/api/payment/initialize", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: Number(amount) }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        window.location.href = data.authorizationUrl;
-      } else {
-        alert(data.error || "Payment failed");
-      }
-    } catch {
-      alert("Something went wrong");
-    }
-  }}
-  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
-  Proceed to Pay with Paystack
-</button>
+              <button
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  if (!token || !amount) return;
+                  try {
+                    const res = await fetch("/api/payment/initialize", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ amount: Number(amount) }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      window.location.href = data.authorizationUrl;
+                    } else {
+                      alert(data.error || "Payment failed");
+                    }
+                  } catch {
+                    alert("Something went wrong");
+                  }
+                }}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
+                Proceed to Pay with Paystack
+              </button>
             </div>
           </motion.div>
         </div>
@@ -366,25 +348,22 @@ useEffect(() => {
             <div className="space-y-4">
               <div className="p-4 bg-emerald-50 rounded-xl">
                 <div className="text-xs text-emerald-600 mb-1">Available Balance</div>
-                <div className="text-2xl font-bold text-emerald-600">₦125,000.00</div>
+                <div className="text-2xl font-bold text-emerald-600">₦{walletBalance.toLocaleString()}.00</div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw</label>
-                <input
-                  type="number"
-                  value={amount}
+                <input type="number" value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="₦0.00"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
-                />
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Bank Account</label>
                 <div className="p-3 border border-gray-200 rounded-xl flex items-center gap-3">
                   <Building className="w-5 h-5 text-gray-400" />
                   <div>
-                    <div className="text-sm font-medium text-gray-900">Access Bank</div>
-                    <div className="text-xs text-gray-400">0123456789 · Chioma Okafor</div>
+                    <div className="text-sm font-medium text-gray-900">Add Bank Account</div>
+                    <div className="text-xs text-gray-400">No bank account linked yet</div>
                   </div>
                 </div>
               </div>
