@@ -13,7 +13,7 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
@@ -121,9 +121,9 @@ export default function RemindersPage() {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Active Reminders", value: "2", icon: Bell, color: "bg-emerald-100 text-emerald-500" },
-              { label: "Upcoming", value: "3", icon: Clock, color: "bg-amber-50 text-amber-500" },
-              { label: "Missed", value: "1", icon: AlertCircle, color: "bg-red-50 text-red-500" },
+              { label: "Active Reminders", value: "0", icon: Bell, color: "bg-emerald-100 text-emerald-500" },
+              { label: "Upcoming", value: "0", icon: Clock, color: "bg-amber-50 text-amber-500" },
+              { label: "Missed", value: "0", icon: AlertCircle, color: "bg-red-50 text-red-500" },
             ].map((stat, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 20 }}

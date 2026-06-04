@@ -19,14 +19,20 @@ const navItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
-const transactions = [
-  { type: "credit", desc: "Payout Received", group: "Family Ajo", amount: "+₦200,000", date: "May 15, 2025", status: "completed" },
-  { type: "debit", desc: "Contribution", group: "Market Women Ajo", amount: "-₦16,000", date: "May 10, 2025", status: "completed" },
-  { type: "credit", desc: "Wallet Funding", group: "Bank Transfer", amount: "+₦50,000", date: "Apr 28, 2025", status: "completed" },
-  { type: "debit", desc: "Contribution", group: "Family Ajo", amount: "-₦20,000", date: "May 1, 2025", status: "completed" },
-  { type: "debit", desc: "Contribution", group: "Office Savings", amount: "-₦10,000", date: "Apr 25, 2025", status: "pending" },
-  { type: "credit", desc: "Referral Bonus", group: "My Ajo", amount: "+₦5,000", date: "Apr 20, 2025", status: "completed" },
-];
+const [realTransactions, setRealTransactions] = useState<any[]>([]);
+
+useEffect(() => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/transactions", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setRealTransactions(data.transactions);
+      });
+  }
+}, []);
 
 export default function WalletPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -242,7 +248,7 @@ useEffect(() => {
               </div>
             </div>
             <div className="divide-y divide-gray-50">
-              {transactions
+              {realTransactions
                 .filter(tx => activeTab === "all" || tx.type === activeTab)
                 .map((tx, i) => (
                   <div key={i} className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
