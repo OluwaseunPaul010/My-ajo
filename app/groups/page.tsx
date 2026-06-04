@@ -213,9 +213,34 @@ export default function GroupsPage() {
                         className="flex-1 text-center py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:border-emerald-300 hover:text-emerald-500 transition-colors flex items-center justify-center gap-1">
                         <MessageCircle className="w-4 h-4" /> Chat
                       </a>
-                      <button className="flex-1 text-center py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-sm text-white transition-colors flex items-center justify-center gap-1">
-                        <CheckCircle className="w-4 h-4" /> Contribute
-                      </button>
+                     <button
+  onClick={async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    if (!confirm(`Contribute ₦${group.contribution?.toLocaleString()} to ${group.name}?`)) return;
+    try {
+      const res = await fetch("/api/contribute", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ groupId: group.id }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Contribution of ₦${data.amount.toLocaleString()} successful!`);
+        window.location.reload();
+      } else {
+        alert(data.error || "Failed to contribute");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  }}
+  className="flex-1 text-center py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-sm text-white transition-colors flex items-center justify-center gap-1">
+  <CheckCircle className="w-4 h-4" /> Contribute
+</button>
                     </div>
                   </div>
                 </motion.div>

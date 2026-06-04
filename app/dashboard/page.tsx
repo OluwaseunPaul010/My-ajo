@@ -95,6 +95,15 @@ export default function DashboardPage() {
                     {item.badge}
                   </span>
                 )}
+                <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors">
+  <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+    {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
+  </div>
+  <div className="flex-1 min-w-0">
+    <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
+    <div className="text-xs text-emerald-500">View Profile</div>
+  </div>
+</a>
               </a>
             ))}
           </nav>
@@ -204,8 +213,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
-                      { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
+                      { label: "Paid", value: "0", color: "bg-emerald-500" },
+                      { label: "Pending", value: "0", color: "bg-amber-400" },
                       { label: "Missed", value: "0", color: "bg-red-400" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
