@@ -1,6 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
@@ -25,6 +25,12 @@ export default function RemindersPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("all");
   const [dismissed, setDismissed] = useState<number[]>([]);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+  const stored = localStorage.getItem("user");
+  if (stored) setUser(JSON.parse(stored));
+}, []);
 
   const filtered = reminders.filter(r => {
     if (dismissed.includes(r.id)) return false;
