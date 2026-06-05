@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { verifyToken } from "@/lib/auth";
 
 function generateInviteCode() {
-  return "AJO-" + Math.random().toString(36).substring(2, 6).toUpperCase() + 
+  return "AJO-" + Math.random().toString(36).substring(2, 6).toUpperCase() +
     "-" + Math.random().toString(36).substring(2, 6).toUpperCase();
 }
 
@@ -15,20 +15,31 @@ export async function GET(req: NextRequest) {
     const decoded = verifyToken(token);
     if (!decoded) return NextResponse.json({ error: "Invalid token" }, { status: 401 });
 
-    const groups = await prisma.groupMember.findMany({
+    const memberships = await prisma.groupMember.findMany({
       where: { userId: decoded.userId },
       include: {
         group: {
           include: {
             members: {
-              include: { user: true }
+              include: {
+                user: {
+                  select: { id: true, fullName: true, email: true, trustScore: true }
+                }
+              },
+              orderBy: { payoutOrder: "asc" }
             },
           },
         },
       },
     });
 
-    return NextResponse.json({ success: true, groups: groups.map((g: any) => g.group) });
+    const groups = memberships.map((m: any) => ({
+      ...m.group,
+      myRole: m.role,
+      myPayoutOrder: m.payoutOrder,
+    }));
+
+    return NextResponse.json({ success: true, groups });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
@@ -65,6 +76,15 @@ export async function POST(req: NextRequest) {
           },
         },
       },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, fullName: true, email: true }
+            }
+          }
+        }
+      }
     });
 
     return NextResponse.json({ success: true, group });
