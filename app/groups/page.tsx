@@ -121,12 +121,12 @@ export default function GroupsPage() {
               { label: "Next Payout", value: "N/A", icon: Clock, color: "bg-amber-50 text-amber-500" },
             ].map((stat, i) => (
               <motion.div key={i}
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ delay: i * 0.1 }}
-  whileHover={{ y: -4 }}
-  className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer"
-  onClick={() => window.location.href = `/groups/${group.id}`}>
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+             transition={{ delay: i * 0.1 }}
+             whileHover={{ y: -4 }}
+           className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer"
+            onClick={() => window.location.href = `/groups/${group.id}`}>
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
