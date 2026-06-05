@@ -371,34 +371,33 @@ export default function GroupsPage() {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-lg font-mono tracking-widest" />
               </div>
               <button
-                onClick={async () => {
-                  const token = localStorage.getItem("token");
-                  if (!token) return;
-                  try {
-                    const res = await fetch("/api/groups/join", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ inviteCode: joinCode }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                      alert(`✅ Successfully joined "${data.group.name}"!`);
-                      setRealGroups([...realGroups, data.group]);
-                      setShowJoinModal(false);
-                      setJoinCode("");
-                    } else {
-                      alert(data.error || "Failed to join group");
-                    }
-                  } catch {
-                    alert("Something went wrong");
-                  }
-                }}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-                <ChevronRight className="w-4 h-4" /> Join Group
-              </button>
+  onClick={async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+    try {
+      const res = await fetch("/api/groups/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ inviteCode: joinCode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ ${data.message}`);
+        setShowJoinModal(false);
+        setJoinCode("");
+      } else {
+        alert(data.error || "Failed to send request");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  }}
+  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+  <ChevronRight className="w-4 h-4" /> Send Join Request
+</button>
             </div>
           </motion.div>
         </div>
