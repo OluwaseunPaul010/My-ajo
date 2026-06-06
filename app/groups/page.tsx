@@ -13,7 +13,7 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
@@ -65,25 +65,30 @@ export default function GroupsPage() {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${item.active ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-emerald-500"}`}>
                 <item.icon className="w-5 h-5" />
                 {item.label}
-                {item.badge && (
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">{item.badge}</span>
-                )}
               </a>
             ))}
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group">
               <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+                <div className="text-xs text-emerald-500">View Profile</div>
               </div>
-              <button className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            </a>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/auth/login";
+              }}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -121,12 +126,10 @@ export default function GroupsPage() {
               { label: "Next Payout", value: "N/A", icon: Clock, color: "bg-amber-50 text-amber-500" },
             ].map((stat, i) => (
               <motion.div key={i}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-             transition={{ delay: i * 0.1 }}
-             whileHover={{ y: -4 }}
-           className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden cursor-pointer"
-            onClick={() => window.location.href = `/groups/${group.id}`}>
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
@@ -171,16 +174,24 @@ export default function GroupsPage() {
                   transition={{ delay: i * 0.1 }}
                   whileHover={{ y: -4 }}
                   className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all overflow-hidden">
-                  <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-5">
+
+                  {/* Clickable Header */}
+                  <div
+                    onClick={() => window.location.href = `/groups/${group.id}`}
+                    className="bg-gradient-to-r from-emerald-500 to-emerald-600 p-5 cursor-pointer">
                     <div className="flex items-center justify-between mb-3">
                       <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
                         <Users className="w-5 h-5 text-white" />
                       </div>
-                      <span className="text-xs bg-white/20 text-white px-2 py-1 rounded-lg font-medium">{group.status}</span>
+                      <span className="text-xs bg-white/20 text-white px-2 py-1 rounded-lg font-medium">
+                        {group.status}
+                      </span>
                     </div>
                     <h3 className="text-white font-bold text-lg">{group.name}</h3>
                     <p className="text-emerald-100 text-sm">{group.members?.length || 1} members · {group.frequency}</p>
                   </div>
+
+                  {/* Card Body */}
                   <div className="p-5">
                     <div className="grid grid-cols-2 gap-4 mb-4">
                       <div>
@@ -193,57 +204,67 @@ export default function GroupsPage() {
                       </div>
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Invite Code</div>
-                        <div className="flex items-center gap-2">
-  <div className="text-xs font-mono font-semibold text-emerald-600">{group.inviteCode}</div>
-  <button
-    onClick={() => {
-      navigator.clipboard.writeText(group.inviteCode);
-      alert("✅ Invite code copied!");
-    }}
-    className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg transition-colors">
-    Copy
-  </button>
-</div>
+                        <div className="flex items-center gap-1">
+                          <div className="text-xs font-mono font-semibold text-emerald-600">{group.inviteCode}</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(group.inviteCode);
+                              alert("✅ Invite code copied!");
+                            }}
+                            className="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-1.5 py-0.5 rounded transition-colors">
+                            Copy
+                          </button>
+                        </div>
                       </div>
                       <div>
                         <div className="text-xs text-gray-400 mb-1">Frequency</div>
                         <div className="text-sm font-semibold text-gray-900 capitalize">{group.frequency}</div>
                       </div>
                     </div>
+
                     <div className="flex gap-2">
                       <a href="/chat"
+                        onClick={(e) => e.stopPropagation()}
                         className="flex-1 text-center py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:border-emerald-300 hover:text-emerald-500 transition-colors flex items-center justify-center gap-1">
                         <MessageCircle className="w-4 h-4" /> Chat
                       </a>
-                     <button
-  onClick={async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    if (!confirm(`Contribute ₦${group.contribution?.toLocaleString()} to ${group.name}?`)) return;
-    try {
-      const res = await fetch("/api/contribute", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ groupId: group.id }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ Contribution of ₦${data.amount.toLocaleString()} successful!`);
-        window.location.reload();
-      } else {
-        alert(data.error || "Failed to contribute");
-      }
-    } catch {
-      alert("Something went wrong");
-    }
-  }}
-  className="flex-1 text-center py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-sm text-white transition-colors flex items-center justify-center gap-1">
-  <CheckCircle className="w-4 h-4" /> Contribute
-</button>
+                      <button
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          const token = localStorage.getItem("token");
+                          if (!token) return;
+                          if (!confirm(`Contribute ₦${group.contribution?.toLocaleString()} to ${group.name}?`)) return;
+                          try {
+                            const res = await fetch("/api/contribute", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({ groupId: group.id }),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              alert(`✅ Contribution of ₦${data.amount?.toLocaleString()} successful!`);
+                              window.location.reload();
+                            } else {
+                              alert(data.error || "Failed to contribute");
+                            }
+                          } catch {
+                            alert("Something went wrong");
+                          }
+                        }}
+                        className="flex-1 text-center py-2 bg-emerald-500 hover:bg-emerald-600 rounded-xl text-sm text-white transition-colors flex items-center justify-center gap-1">
+                        <CheckCircle className="w-4 h-4" /> Contribute
+                      </button>
                     </div>
+
+                    <button
+                      onClick={() => window.location.href = `/groups/${group.id}`}
+                      className="mt-2 w-full text-center py-2 border border-emerald-200 hover:bg-emerald-50 rounded-xl text-sm text-emerald-500 font-medium transition-colors flex items-center justify-center gap-1">
+                      View Group Details <ChevronRight className="w-4 h-4" />
+                    </button>
                   </div>
                 </motion.div>
               ))
@@ -259,7 +280,7 @@ export default function GroupsPage() {
                 <Plus className="w-6 h-6 text-gray-400 group-hover:text-emerald-500 transition-colors" />
               </div>
               <div className="text-center">
-                <div className="text-sm font-semibold text-gray-600 group-hover:text-emerald-500 transition-colors">Create New Group</div>
+                <div className="text-sm font-semibold text-gray-600 group-hover:text-emerald-500">Create New Group</div>
                 <div className="text-xs text-gray-400 mt-1">Start a new savings circle</div>
               </div>
             </motion.button>
@@ -361,7 +382,7 @@ export default function GroupsPage() {
             </div>
             <div className="space-y-4">
               <div className="p-4 bg-emerald-50 rounded-xl text-sm text-emerald-700">
-                Enter the invite code shared by the group admin to join their savings circle.
+                Enter the invite code shared by the group admin. Your request will be sent to the admin for approval.
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Invite Code</label>
@@ -371,33 +392,33 @@ export default function GroupsPage() {
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-lg font-mono tracking-widest" />
               </div>
               <button
-  onClick={async () => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-    try {
-      const res = await fetch("/api/groups/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ inviteCode: joinCode }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ ${data.message}`);
-        setShowJoinModal(false);
-        setJoinCode("");
-      } else {
-        alert(data.error || "Failed to send request");
-      }
-    } catch {
-      alert("Something went wrong");
-    }
-  }}
-  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-  <ChevronRight className="w-4 h-4" /> Send Join Request
-</button>
+                onClick={async () => {
+                  const token = localStorage.getItem("token");
+                  if (!token) return;
+                  try {
+                    const res = await fetch("/api/groups/request", {
+                      method: "POST",
+                      headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`,
+                      },
+                      body: JSON.stringify({ inviteCode: joinCode }),
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                      alert(`✅ ${data.message}`);
+                      setShowJoinModal(false);
+                      setJoinCode("");
+                    } else {
+                      alert(data.error || "Failed to send request");
+                    }
+                  } catch {
+                    alert("Something went wrong");
+                  }
+                }}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                <ChevronRight className="w-4 h-4" /> Send Join Request
+              </button>
             </div>
           </motion.div>
         </div>
