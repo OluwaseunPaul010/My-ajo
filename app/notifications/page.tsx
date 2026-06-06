@@ -13,7 +13,7 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
@@ -88,34 +88,33 @@ export default function NotificationsPage() {
           <nav className="flex-1 px-4 py-6 space-y-1">
             {navItems.map((item, i) => (
               <a key={i} href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${item.active ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-emerald-500"}`}>
+                className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-gray-600 hover:bg-gray-50 hover:text-emerald-500">
                 <item.icon className="w-5 h-5" />
                 {item.label}
-                {item.badge && (
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">{item.badge}</span>
-                )}
               </a>
             ))}
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group">
               <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+                <div className="text-xs text-emerald-500">View Profile</div>
               </div>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
-                  window.location.href = "/auth/login";
-                }}
-                className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            </a>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/auth/login";
+              }}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
@@ -144,9 +143,9 @@ export default function NotificationsPage() {
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
-              { label: "Total Notifications", value: notifications.length.toString(), icon: Bell, color: "bg-emerald-100 text-emerald-500" },
-              { label: "Unread", value: unreadCount.toString(), icon: AlertCircle, color: "bg-amber-50 text-amber-500" },
-              { label: "Read", value: (notifications.length - unreadCount).toString(), icon: CheckCircle, color: "bg-blue-50 text-blue-500" },
+              { label: "Total Notifications", value: notifications.length, icon: Bell, color: "bg-emerald-100 text-emerald-500" },
+              { label: "Unread", value: unreadCount, icon: AlertCircle, color: "bg-amber-50 text-amber-500" },
+              { label: "Read", value: notifications.length - unreadCount, icon: CheckCircle, color: "bg-blue-50 text-blue-500" },
             ].map((stat, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 20 }}
@@ -203,6 +202,44 @@ export default function NotificationsPage() {
                             hour: "2-digit", minute: "2-digit"
                           })}
                         </div>
+
+                        {/* Action Buttons based on notification type */}
+                        {notif.type === "group" && notif.title.includes("Join Request") && (
+                          <a href="/groups"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            👉 Review Request in Groups
+                          </a>
+                        )}
+                        {notif.type === "group" && notif.title.includes("Approved") && (
+                          <a href="/groups"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            🎉 View My Groups
+                          </a>
+                        )}
+                        {notif.type === "payment" && (
+                          <a href="/wallet"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            💰 View Wallet
+                          </a>
+                        )}
+                        {notif.type === "success" && notif.title.includes("Contribution") && (
+                          <a href="/transactions"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            📊 View Transactions
+                          </a>
+                        )}
+                        {notif.type === "success" && notif.title.includes("Goal") && (
+                          <a href="/goals"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            🎯 View Goals
+                          </a>
+                        )}
+                        {notif.type === "alert" && notif.title.includes("Password") && (
+                          <a href="/settings"
+                            className="mt-2 inline-flex items-center gap-1 text-xs bg-red-50 hover:bg-red-100 text-red-500 px-3 py-1.5 rounded-lg transition-colors font-medium">
+                            🔐 Go to Settings
+                          </a>
+                        )}
                       </div>
                     </motion.div>
                   );
