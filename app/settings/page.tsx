@@ -171,58 +171,90 @@ export default function SettingsPage() {
   };
 
   const handleVerifyEmail = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/verify-email", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: user?.id, token: verifyCode }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUser({ ...user, emailVerified: true });
-        setShowVerifyInput(false);
-        showSuccess("Email verified successfully! +5 trust points!");
-      } else {
-        showError(data.error || "Invalid code");
-      }
-    } catch {
-      showError("Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  };
+  setLoading(true);
+  try {
+    const res = await fetch("/api/auth/verify-email", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId: user?.id, token: verifyCode }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const updatedUser = { ...user, emailVerified: true };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      setShowVerifyInput(false);
+      setVerifyCode("");
+      showSuccess("Email verified successfully! +5 trust points!");
 
-  const handleBvnVerify = async () => {
-    if (!bvn || bvn.length !== 11) {
-      showError("BVN must be 11 digits");
-      return;
-    }
-    setLoading(true);
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("/api/auth/verify-bvn", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ bvn }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setUser({ ...user, bvnVerified: true, isVerified: true, kycStatus: "verified" });
-        showSuccess("BVN verified! +10 trust points! Account fully verified!");
-        setBvn("");
-      } else {
-        showError(data.error || "BVN verification failed");
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch("/api/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((freshData) => {
+            if (freshData.success) {
+              setUser(freshData.user);
+              localStorage.setItem("user", JSON.stringify(freshData.user));
+            }
+          });
       }
-    } catch {
-      showError("Something went wrong");
-    } finally {
-      setLoading(false);
+    } else {
+      showError(data.error || "Invalid code");
     }
-  };
+  } catch {
+    showError("Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
+
+ const handleBvnVerify = async () => {
+  if (!bvn || bvn.length !== 11) {
+    showError("BVN must be 11 digits");
+    return;
+  }
+  setLoading(true);
+  const token = localStorage.getItem("token");
+  try {
+    const res = await fetch("/api/auth/verify-bvn", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ bvn }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      const updatedUser = { ...user, bvnVerified: true, isVerified: true, kycStatus: "verified" };
+      setUser(updatedUser);
+      localStorage.setItem("user", JSON.stringify(updatedUser));
+      showSuccess("BVN verified! +10 trust points! Account fully verified!");
+      setBvn("");
+
+      if (token) {
+        fetch("/api/user", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+          .then((res) => res.json())
+          .then((freshData) => {
+            if (freshData.success) {
+              setUser(freshData.user);
+              localStorage.setItem("user", JSON.stringify(freshData.user));
+            }
+          });
+      }
+    } else {
+      showError(data.error || "BVN verification failed");
+    }
+  } catch {
+    showError("Something went wrong");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex">

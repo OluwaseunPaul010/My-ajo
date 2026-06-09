@@ -239,33 +239,75 @@ export default function GoalsPage() {
                       <div className="text-xs text-gray-400 mt-1">Target: ₦{goal.targetAmount.toLocaleString()}</div>
                     </div>
                    <button
-  onClick={async () => {
-    const amount = prompt("Enter amount to save towards this goal (₦):");
-    if (!amount || isNaN(parseFloat(amount))) return;
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("/api/goals", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ goalId: goal.id, amount: parseFloat(amount) }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setGoals(goals.map((g) => g.id === goal.id ? data.goal : g));
-        alert(`✅ ₦${parseFloat(amount).toLocaleString()} saved towards "${goal.title}"!`);
-      } else {
-        alert(data.error || "Failed to add savings");
+  {goal.savedAmount >= goal.targetAmount && goal.status !== "withdrawn" ? (
+  <div className="space-y-2">
+    <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
+      <div className="text-emerald-600 font-semibold text-sm">🎉 Goal Completed!</div>
+      <div className="text-xs text-emerald-500 mt-0.5">Ready to withdraw to wallet</div>
+    </div>
+    <button
+      onClick={async () => {
+        if (!confirm(`Withdraw ₦${goal.savedAmount.toLocaleString()} to your wallet?`)) return;
+        const token = localStorage.getItem("token");
+        try {
+          const res = await fetch("/api/goals/withdraw", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ goalId: goal.id }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert(`✅ ₦${data.amount.toLocaleString()} withdrawn to your wallet!`);
+            setGoals(goals.map((g) => g.id === goal.id ? { ...g, status: "withdrawn" } : g));
+          } else {
+            alert(data.error || "Failed to withdraw");
+          }
+        } catch {
+          alert("Something went wrong");
+        }
+      }}
+      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+      💰 Withdraw to Wallet
+    </button>
+  </div>
+) : goal.status === "withdrawn" ? (
+  <div className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-center">
+    <div className="text-gray-500 font-medium text-sm">✅ Withdrawn to Wallet</div>
+    <div className="text-xs text-gray-400 mt-0.5">This goal has been completed</div>
+  </div>
+) : (
+  <button
+    onClick={async () => {
+      const amount = prompt("Enter amount to save towards this goal (₦):");
+      if (!amount || isNaN(parseFloat(amount))) return;
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("/api/goals", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ goalId: goal.id, amount: parseFloat(amount) }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          setGoals(goals.map((g) => g.id === goal.id ? data.goal : g));
+          alert(`✅ ₦${parseFloat(amount).toLocaleString()} saved towards "${goal.title}"!`);
+        } else {
+          alert(data.error || "Failed to add savings");
+        }
+      } catch {
+        alert("Something went wrong");
       }
-    } catch {
-      alert("Something went wrong");
-    }
-  }}
-  className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 py-2 rounded-xl text-sm font-medium transition-colors">
-  + Add Savings
-</button>
+    }}
+    className="w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-600 py-2 rounded-xl text-sm font-medium transition-colors">
+    + Add Savings
+  </button>
+)}
                   </motion.div>
                 );
               })}
