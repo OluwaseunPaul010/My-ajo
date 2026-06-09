@@ -238,8 +238,7 @@ export default function GoalsPage() {
                       </div>
                       <div className="text-xs text-gray-400 mt-1">Target: ₦{goal.targetAmount.toLocaleString()}</div>
                     </div>
-                   <button
-  {goal.savedAmount >= goal.targetAmount && goal.status !== "withdrawn" ? (
+                {goal.savedAmount >= goal.targetAmount && goal.status !== "withdrawn" ? (
   <div className="space-y-2">
     <div className="w-full bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-center">
       <div className="text-emerald-600 font-semibold text-sm">🎉 Goal Completed!</div>
