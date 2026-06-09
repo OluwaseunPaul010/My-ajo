@@ -27,8 +27,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (!wallet || wallet.balance < group.contribution) {
-      return NextResponse.json({ 
-        error: `Insufficient balance. You need ₦${group.contribution.toLocaleString()} to contribute.` 
+      return NextResponse.json({
+        error: `Insufficient balance. You need ₦${group.contribution.toLocaleString()} to contribute.`,
       }, { status: 400 });
     }
 
@@ -53,16 +53,31 @@ export async function POST(req: NextRequest) {
       data: { streak: { increment: 1 } },
     });
 
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { trustScore: true },
+    });
+
+    const newScore = Math.min(100, (user?.trustScore || 100) + 2);
+    await prisma.user.update({
+      where: { id: decoded.userId },
+      data: { trustScore: newScore },
+    });
+
     await prisma.notification.create({
       data: {
         userId: decoded.userId,
         title: "Contribution Successful! ✅",
-        message: `Your contribution of ₦${group.contribution.toLocaleString()} to ${group.name} was successful.`,
+        message: `Your contribution of ₦${group.contribution.toLocaleString()} to ${group.name} was successful. Trust score: ${newScore}%`,
         type: "payment",
       },
     });
 
-    return NextResponse.json({ success: true, amount: group.contribution });
+    return NextResponse.json({
+      success: true,
+      amount: group.contribution,
+      newTrustScore: newScore,
+    });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

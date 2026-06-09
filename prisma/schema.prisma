@@ -27,6 +27,15 @@ model User {
   messages      Message[]
   goals        Goal[]
   joinRequests  JoinRequest[]
+  bvn              String?
+nin              String?
+bvnVerified      Boolean  @default(false)
+ninVerified      Boolean  @default(false)
+kycStatus        String   @default("unverified")
+emailVerified    Boolean  @default(false)
+emailVerifyToken String?
+loginAttempts    Int      @default(0)
+lockedUntil      DateTime?
 }
 
 model Wallet {
