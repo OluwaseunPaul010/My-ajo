@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
         },
         transactions: {
           orderBy: { createdAt: "desc" },
-          take: 5,
+          take: 10,
         },
       },
     });
@@ -51,12 +51,26 @@ export async function GET(req: NextRequest) {
       myPayoutOrder: m.payoutOrder,
     }));
 
+    const contributions = user.transactions.filter((t: any) => t.type === "debit" && t.groupId);
+    const totalContributed = contributions.reduce((sum: number, t: any) => sum + t.amount, 0);
+    const totalExpected = groups.reduce((sum: number, g: any) => sum + g.contribution, 0);
+    const missedContributions = Math.max(0, groups.length - contributions.length);
+
+    const contributionOverview = {
+      paid: contributions.length,
+      totalExpected: groups.length,
+      totalContributed,
+      totalExpected: totalExpected,
+      missed: missedContributions,
+      pending: Math.max(0, groups.length - contributions.length),
+      percentage: groups.length > 0 ? Math.round((contributions.length / groups.length) * 100) : 0,
+    };
+
     const upcomingPayout = groups.reduce((best: any, group: any) => {
-      const myPosition = group.members.findIndex((m: any) => m.userId === decoded.userId);
-      const nextPosition = group.members.findIndex((m: any, i: number) => i > 0);
+      const myPosition = group.members?.findIndex((m: any) => m.userId === decoded.userId);
       if (myPosition === 1) {
         return {
-          amount: group.contribution * group.members.length,
+          amount: group.contribution * (group.members?.length || 1),
           groupName: group.name,
           position: myPosition + 1,
         };
@@ -72,12 +86,16 @@ export async function GET(req: NextRequest) {
         email: user.email,
         phone: user.phone,
         isVerified: user.isVerified,
+        emailVerified: user.emailVerified,
+        bvnVerified: user.bvnVerified,
+        kycStatus: user.kycStatus,
         trustScore: user.trustScore,
         streak: user.streak,
         wallet: user.wallet,
         groups,
         transactions: user.transactions,
         upcomingPayout,
+        contributionOverview,
       },
     });
   } catch (error) {

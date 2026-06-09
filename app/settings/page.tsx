@@ -87,7 +87,7 @@ export default function SettingsPage() {
           }
         });
     }
-  }, []);
+  } [];
 
   const showSuccess = (msg: string) => {
     setSuccess(msg);
