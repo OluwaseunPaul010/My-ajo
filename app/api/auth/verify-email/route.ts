@@ -17,8 +17,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.emailVerified) {
-      return NextResponse.json({ error: "Email already verified" }, { status: 400 });
-    }
+  return NextResponse.json({ 
+    success: true,
+    alreadyVerified: true,
+    message: "Email is already verified" 
+  });
+}
 
     const verifyToken = Math.floor(100000 + Math.random() * 900000).toString();
 

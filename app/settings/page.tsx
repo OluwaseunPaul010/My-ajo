@@ -50,16 +50,25 @@ export default function SettingsPage() {
   });
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) {
-      const u = JSON.parse(stored);
-      setUser(u);
-      setProfileForm({
-        fullName: u.fullName || "",
-        email: u.email || "",
-        phone: u.phone || "",
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser(data.user);
+          setProfileForm({
+            fullName: data.user.fullName || "",
+            email: data.user.email || "",
+            phone: data.user.phone || "",
+          });
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
       });
-    }
+  }
+}, []);
 
     const token = localStorage.getItem("token");
     if (token) {
