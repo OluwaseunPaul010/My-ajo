@@ -34,41 +34,52 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
-    if (stored) setUser(JSON.parse(stored));
+  const stored = localStorage.getItem("user");
+  if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetch("/api/user", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setUser(data.user);
-            localStorage.setItem("user", JSON.stringify(data.user));
+  const token = localStorage.getItem("token");
+  if (token) {
+    fetch("/api/user", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+
+          if (data.user.upcomingPayout) {
+            setUpcomingPayout(data.user.upcomingPayout);
           }
-        });
 
-      fetch("/api/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) setRealTransactions(data.transactions);
-        });
+          if (data.user.groups?.length > 0) {
+            const firstGroup = data.user.groups[0];
+            setPayoutRotation(firstGroup.members || []);
+          }
+        }
+      });
 
-      fetch("/api/notifications", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) setUnreadCount(data.unreadCount);
-        });
-    }
-  }, []);
+    fetch("/api/transactions", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setRealTransactions(data.transactions);
+      });
+
+    fetch("/api/notifications", {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setUnreadCount(data.unreadCount);
+      });
+  }
+}, []);
 
   const hasGroups = user?.groups?.length > 0;
+  const [upcomingPayout, setUpcomingPayout] = useState<any>(null);
+  const [payoutRotation, setPayoutRotation] = useState<any[]>([]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -153,7 +164,7 @@ export default function DashboardPage() {
             {[
               { label: "Wallet Balance", value: `₦${(user?.wallet?.balance || 0).toLocaleString()}.00`, sub: "Available Balance", icon: Wallet },
               { label: "Total Contributions", value: `₦${realTransactions.filter((t: any) => t.type === "debit").reduce((s: number, t: any) => s + t.amount, 0).toLocaleString()}.00`, sub: "All time", icon: TrendingUp },
-              { label: "Upcoming Payout", value: "₦0.00", sub: "No upcoming payout", icon: Zap },
+              { label: "Upcoming Payout", value: upcomingPayout ? `₦${upcomingPayout.amount?.toLocaleString()}` : "₦0.00", sub: upcomingPayout ? `${upcomingPayout.groupName}` : "No upcoming payout", icon: Zap },
               { label: "Contribution Streak", value: `${user?.streak || 0} Weeks`, sub: user?.streak > 0 ? "Amazing! Keep it up 🔥" : "Start contributing!", icon: Target },
             ].map((card, i) => (
               <motion.div key={i}
@@ -223,44 +234,56 @@ export default function DashboardPage() {
 
             {/* Payout Rotation */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Payout Rotation</h2>
-                <a href="#" className="text-xs text-emerald-500 font-medium">View Full</a>
-              </div>
-              {!hasGroups ? (
-                <div className="text-center py-8 text-gray-400">
-                  <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Zap className="w-8 h-8 text-emerald-300" />
-                  </div>
-                  <p className="text-sm font-medium text-gray-500">No payout rotation yet</p>
-                  <p className="text-xs text-gray-400 mt-1">Join a group to see rotation!</p>
-                  <a href="/groups" className="mt-3 inline-block text-xs text-emerald-500 font-medium hover:underline">
-                    Join a Group →
-                  </a>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {[
-                    { name: "Tunde Adeyemi", date: "May 1, 2025", status: "Paid", color: "text-emerald-500 bg-emerald-50" },
-                    { name: "Chioma Okafor", date: "May 15 (in 2 days)", status: "Upcoming", color: "text-amber-500 bg-amber-50" },
-                    { name: "Emeka Nwosu", date: "May 29, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
-                    { name: "Adesola Bankole", date: "June 12, 2025", status: "Waiting", color: "text-gray-400 bg-gray-50" },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <span className="text-sm text-gray-400 w-4">{i + 1}</span>
-                      <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold text-xs">
-                        {item.name.charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-medium text-gray-900 truncate">{item.name}</div>
-                        <div className="text-xs text-gray-400">{item.date}</div>
-                      </div>
-                      <span className={`text-xs px-2 py-1 rounded-lg font-medium ${item.color}`}>{item.status}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-base font-semibold text-gray-900">Payout Rotation</h2>
+    {hasGroups && (
+      <a href="/groups" className="text-xs text-emerald-500 font-medium">View Groups</a>
+    )}
+  </div>
+  {!hasGroups || payoutRotation.length === 0 ? (
+    <div className="text-center py-8 text-gray-400">
+      <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+        <Zap className="w-8 h-8 text-emerald-300" />
+      </div>
+      <p className="text-sm font-medium text-gray-500">No payout rotation yet</p>
+      <p className="text-xs text-gray-400 mt-1">Join a group to see rotation!</p>
+      <a href="/groups" className="mt-3 inline-block text-xs text-emerald-500 font-medium hover:underline">
+        Join a Group →
+      </a>
+    </div>
+  ) : (
+    <div className="space-y-3">
+      {payoutRotation.map((member: any, i: number) => {
+        const isPaid = i === 0;
+        const isNext = i === 1;
+        const isMe = member.userId === user?.id;
+        const totalPot = (user?.groups?.[0]?.contribution || 0) * payoutRotation.length;
+        return (
+          <div key={i} className={`flex items-center gap-3 p-2 rounded-xl ${isNext ? "bg-amber-50" : isMe ? "bg-emerald-50/50" : ""}`}>
+            <span className="text-sm text-gray-400 w-4 flex-shrink-0">{i + 1}</span>
+            <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-semibold text-xs flex-shrink-0">
+              {member.user?.fullName?.charAt(0) || "U"}
             </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1">
+                <div className="text-sm font-medium text-gray-900 truncate">
+                  {isMe ? "You" : member.user?.fullName}
+                </div>
+              </div>
+              <div className="text-xs text-gray-400">₦{totalPot.toLocaleString()}</div>
+            </div>
+            <span className={`text-xs px-2 py-1 rounded-lg font-medium flex-shrink-0 ${isPaid ? "text-emerald-500 bg-emerald-50" : isNext ? "text-amber-500 bg-amber-50" : "text-gray-400 bg-gray-50"}`}>
+              {isPaid ? "Paid" : isNext ? "Next Up" : "Waiting"}
+            </span>
+          </div>
+        );
+      })}
+      <p className="text-xs text-gray-400 mt-2 text-center">
+        Showing rotation for: {user?.groups?.[0]?.name}
+      </p>
+    </div>
+  )}
+</div>
 
             {/* Quick Actions */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
