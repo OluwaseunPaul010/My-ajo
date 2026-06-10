@@ -7,10 +7,7 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: "Email and password are required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({
@@ -19,20 +16,53 @@ export async function POST(req: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 });
+    }
+
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
+      const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
+      return NextResponse.json({
+        error: `Account locked due to too many failed attempts. Try again in ${minutesLeft} minute(s).`,
+      }, { status: 423 });
     }
 
     const isValid = await verifyPassword(password, user.password);
 
     if (!isValid) {
-      return NextResponse.json(
-        { error: "Invalid email or password" },
-        { status: 401 }
-      );
+      const attempts = (user.loginAttempts || 0) + 1;
+      const shouldLock = attempts >= 5;
+
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          loginAttempts: attempts,
+          lockedUntil: shouldLock ? new Date(Date.now() + 30 * 60 * 1000) : null,
+        },
+      });
+
+      if (shouldLock) {
+        await prisma.notification.create({
+          data: {
+            userId: user.id,
+            title: "Account Temporarily Locked 🔒",
+            message: "Your account has been locked for 30 minutes due to 5 failed login attempts. If this wasn't you, change your password immediately.",
+            type: "alert",
+          },
+        });
+        return NextResponse.json({
+          error: "Account locked for 30 minutes due to too many failed attempts.",
+        }, { status: 423 });
+      }
+
+      return NextResponse.json({
+        error: `Invalid email or password. ${5 - attempts} attempt(s) remaining.`,
+      }, { status: 401 });
     }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { loginAttempts: 0, lockedUntil: null },
+    });
 
     const token = generateToken(user.id);
 
@@ -45,13 +75,14 @@ export async function POST(req: NextRequest) {
         email: user.email,
         phone: user.phone,
         wallet: user.wallet,
+        isVerified: user.isVerified,
+        emailVerified: user.emailVerified,
+        bvnVerified: user.bvnVerified,
+        trustScore: user.trustScore,
       },
     });
   } catch (error) {
     console.error(error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
