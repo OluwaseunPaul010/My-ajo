@@ -212,7 +212,7 @@ export default function DashboardPage() {
                         <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="12" strokeDasharray="251 314" strokeLinecap="round" />
                       </svg>
                       <div className="absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="text-2xl font-bold text-gray-900">8/10</span>
+                        <span className="text-2xl font-bold text-gray-900">0/10</span>
                         <span className="text-xs text-gray-400">Completed</span>
                       </div>
                     </div>
