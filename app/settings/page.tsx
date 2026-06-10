@@ -32,49 +32,16 @@ export default function SettingsPage() {
   const [verifyCode, setVerifyCode] = useState("");
   const [bvn, setBvn] = useState("");
   const [showVerifyInput, setShowVerifyInput] = useState(false);
-
-  const [profileForm, setProfileForm] = useState({
-    fullName: "", email: "", phone: "",
-  });
-
-  const [passwordForm, setPasswordForm] = useState({
-    currentPassword: "", newPassword: "", confirmPassword: "",
-  });
-
+  const [profileForm, setProfileForm] = useState({ fullName: "", email: "", phone: "" });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [notifications, setNotifications] = useState({
-    contributions: true,
-    payouts: true,
-    reminders: true,
-    groupActivity: true,
-    marketing: false,
+    contributions: true, payouts: true, reminders: true, groupActivity: true, marketing: false,
   });
 
   useEffect(() => {
-  const token = localStorage.getItem("token");
-  if (token) {
-    fetch("/api/user", {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.success) {
-          setUser(data.user);
-          setProfileForm({
-            fullName: data.user.fullName || "",
-            email: data.user.email || "",
-            phone: data.user.phone || "",
-          });
-          localStorage.setItem("user", JSON.stringify(data.user));
-        }
-      });
-  }
-}, []);
-
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("/api/user", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
@@ -84,21 +51,27 @@ export default function SettingsPage() {
               email: data.user.email || "",
               phone: data.user.phone || "",
             });
+            localStorage.setItem("user", JSON.stringify(data.user));
           }
         });
     }
-  } [];
+  }, []);
 
-  const showSuccess = (msg: string) => {
-    setSuccess(msg);
-    setError("");
-    setTimeout(() => setSuccess(""), 3000);
+  const showMsg = (msg: string, type: "success" | "error") => {
+    if (type === "success") { setSuccess(msg); setError(""); }
+    else { setError(msg); setSuccess(""); }
+    setTimeout(() => { setSuccess(""); setError(""); }, 3000);
   };
 
-  const showError = (msg: string) => {
-    setError(msg);
-    setSuccess("");
-    setTimeout(() => setError(""), 3000);
+  const refreshUser = (token: string) => {
+    fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) {
+          setUser(data.user);
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+      });
   };
 
   const handleProfileUpdate = async () => {
@@ -107,21 +80,18 @@ export default function SettingsPage() {
     try {
       const res = await fetch("/api/user/update", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(profileForm),
       });
       const data = await res.json();
       if (data.success) {
-        localStorage.setItem("user", JSON.stringify({ ...user, ...profileForm }));
-        showSuccess("Profile updated successfully!");
+        showMsg("Profile updated successfully!", "success");
+        if (token) refreshUser(token);
       } else {
-        showError(data.error || "Failed to update profile");
+        showMsg(data.error || "Failed to update", "error");
       }
     } catch {
-      showError("Something went wrong");
+      showMsg("Something went wrong", "error");
     } finally {
       setLoading(false);
     }
@@ -129,7 +99,7 @@ export default function SettingsPage() {
 
   const handlePasswordUpdate = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showError("Passwords do not match!");
+      showMsg("Passwords do not match!", "error");
       return;
     }
     setLoading(true);
@@ -137,21 +107,18 @@ export default function SettingsPage() {
     try {
       const res = await fetch("/api/user/password", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(passwordForm),
       });
       const data = await res.json();
       if (data.success) {
-        showSuccess("Password updated successfully!");
+        showMsg("Password updated successfully!", "success");
         setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       } else {
-        showError(data.error || "Failed to update password");
+        showMsg(data.error || "Failed to update", "error");
       }
     } catch {
-      showError("Something went wrong");
+      showMsg("Something went wrong", "error");
     } finally {
       setLoading(false);
     }
@@ -168,102 +135,69 @@ export default function SettingsPage() {
       const data = await res.json();
       if (data.success) {
         setShowVerifyInput(true);
-        showSuccess("Verification code sent to your email!");
+        showMsg("Verification code sent to your email!", "success");
       } else {
-        showError(data.error || "Failed to send code");
+        showMsg(data.error || "Failed to send code", "error");
       }
     } catch {
-      showError("Something went wrong");
+      showMsg("Something went wrong", "error");
     } finally {
       setLoading(false);
     }
   };
 
   const handleVerifyEmail = async () => {
-  setLoading(true);
-  try {
-    const res = await fetch("/api/auth/verify-email", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: user?.id, token: verifyCode }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      const updatedUser = { ...user, emailVerified: true };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      setShowVerifyInput(false);
-      setVerifyCode("");
-      showSuccess("Email verified successfully! +5 trust points!");
-
-      const token = localStorage.getItem("token");
-      if (token) {
-        fetch("/api/user", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((freshData) => {
-            if (freshData.success) {
-              setUser(freshData.user);
-              localStorage.setItem("user", JSON.stringify(freshData.user));
-            }
-          });
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-email", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: user?.id, token: verifyCode }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMsg("Email verified! +5 trust points!", "success");
+        setShowVerifyInput(false);
+        setVerifyCode("");
+        const token = localStorage.getItem("token");
+        if (token) refreshUser(token);
+      } else {
+        showMsg(data.error || "Invalid code", "error");
       }
-    } else {
-      showError(data.error || "Invalid code");
+    } catch {
+      showMsg("Something went wrong", "error");
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    showError("Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
- const handleBvnVerify = async () => {
-  if (!bvn || bvn.length !== 11) {
-    showError("BVN must be 11 digits");
-    return;
-  }
-  setLoading(true);
-  const token = localStorage.getItem("token");
-  try {
-    const res = await fetch("/api/auth/verify-bvn", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ bvn }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      const updatedUser = { ...user, bvnVerified: true, isVerified: true, kycStatus: "verified" };
-      setUser(updatedUser);
-      localStorage.setItem("user", JSON.stringify(updatedUser));
-      showSuccess("BVN verified! +10 trust points! Account fully verified!");
-      setBvn("");
-
-      if (token) {
-        fetch("/api/user", {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-          .then((res) => res.json())
-          .then((freshData) => {
-            if (freshData.success) {
-              setUser(freshData.user);
-              localStorage.setItem("user", JSON.stringify(freshData.user));
-            }
-          });
+  const handleBvnVerify = async () => {
+    if (!bvn || bvn.length !== 11) {
+      showMsg("BVN must be 11 digits", "error");
+      return;
+    }
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/auth/verify-bvn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bvn }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMsg("BVN verified! +10 trust points!", "success");
+        setBvn("");
+        if (token) refreshUser(token);
+      } else {
+        showMsg(data.error || "BVN verification failed", "error");
       }
-    } else {
-      showError(data.error || "BVN verification failed");
+    } catch {
+      showMsg("Something went wrong", "error");
+    } finally {
+      setLoading(false);
     }
-  } catch {
-    showError("Something went wrong");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -334,7 +268,6 @@ export default function SettingsPage() {
               <span className="text-sm text-emerald-700 font-medium">{success}</span>
             </motion.div>
           )}
-
           {error && (
             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl flex items-center gap-3">
@@ -406,7 +339,7 @@ export default function SettingsPage() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
                 </div>
                 <button onClick={handleProfileUpdate} disabled={loading}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center">
                   {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Save Changes"}
                 </button>
               </div>
@@ -452,7 +385,7 @@ export default function SettingsPage() {
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
                 </div>
                 <button onClick={handlePasswordUpdate} disabled={loading}
-                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center">
                   {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Update Password"}
                 </button>
               </div>
@@ -464,7 +397,7 @@ export default function SettingsPage() {
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="space-y-6">
 
-              {/* Verification Status */}
+              {/* Status Cards */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h2 className="text-base font-semibold text-gray-900 mb-4">Verification Status</h2>
                 <div className="space-y-3">
@@ -475,14 +408,16 @@ export default function SettingsPage() {
                   ].map((item, i) => (
                     <div key={i} className={`flex items-center gap-3 p-4 rounded-xl ${item.status ? "bg-emerald-50" : "bg-gray-50"}`}>
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${item.status ? "bg-emerald-100" : "bg-gray-200"}`}>
-                        {item.status ? <CheckCircle className="w-5 h-5 text-emerald-500" /> : <AlertCircle className="w-5 h-5 text-gray-400" />}
+                        {item.status
+                          ? <CheckCircle className="w-5 h-5 text-emerald-500" />
+                          : <AlertCircle className="w-5 h-5 text-gray-400" />}
                       </div>
                       <div className="flex-1">
                         <div className="text-sm font-medium text-gray-900">{item.label}</div>
                         <div className="text-xs text-gray-400">{item.desc}</div>
                       </div>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${item.status ? "bg-emerald-100 text-emerald-600" : "bg-red-100 text-red-500"}`}>
-                        {item.status ? "Verified" : "Not Verified"}
+                        {item.status ? "Verified ✅" : "Not Verified"}
                       </span>
                     </div>
                   ))}
@@ -493,11 +428,11 @@ export default function SettingsPage() {
               {!user?.emailVerified && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                   <h2 className="text-base font-semibold text-gray-900 mb-2">Verify Email</h2>
-                  <p className="text-sm text-gray-500 mb-4">Verify your email to increase your trust score by 5 points</p>
+                  <p className="text-sm text-gray-500 mb-4">+5 trust points on verification</p>
                   {!showVerifyInput ? (
                     <button onClick={handleSendVerification} disabled={loading}
-                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
-                      {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" /> : "Send Verification Code"}
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center">
+                      {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Send Verification Code"}
                     </button>
                   ) : (
                     <div className="space-y-3">
@@ -519,32 +454,32 @@ export default function SettingsPage() {
               {!user?.bvnVerified && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                   <h2 className="text-base font-semibold text-gray-900 mb-2">Verify BVN</h2>
-                  <p className="text-sm text-gray-500 mb-4">Verify your BVN to get full account verification and +10 trust points</p>
+                  <p className="text-sm text-gray-500 mb-4">Get full verification + 10 trust points</p>
                   <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl mb-4">
-                    <p className="text-xs text-amber-700">🔒 Your BVN is encrypted and never shared with third parties. It is only used for identity verification.</p>
+                    <p className="text-xs text-amber-700">🔒 Your BVN is encrypted and never shared with third parties.</p>
                   </div>
                   <div className="space-y-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">BVN Number</label>
-                      <input type="text" value={bvn}
-                        onChange={(e) => setBvn(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                        placeholder="Enter your 11-digit BVN"
-                        maxLength={11}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-xl font-mono tracking-widest" />
-                    </div>
+                    <input type="text" value={bvn}
+                      onChange={(e) => setBvn(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                      placeholder="Enter your 11-digit BVN"
+                      maxLength={11}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-xl font-mono tracking-widest" />
                     <button onClick={handleBvnVerify} disabled={loading || bvn.length !== 11}
                       className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-                      {loading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <><CreditCard className="w-4 h-4" /> Verify BVN</>}
+                      {loading
+                        ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        : <><CreditCard className="w-4 h-4" /> Verify BVN</>}
                     </button>
                   </div>
                 </div>
               )}
 
+              {/* Fully Verified */}
               {user?.bvnVerified && user?.emailVerified && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
                   <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
                   <h3 className="text-lg font-bold text-emerald-700">Fully Verified! 🎉</h3>
-                  <p className="text-sm text-emerald-600 mt-1">Your account is fully verified. You have access to all features!</p>
+                  <p className="text-sm text-emerald-600 mt-1">Your account is fully verified with all features unlocked!</p>
                 </div>
               )}
             </motion.div>
@@ -561,7 +496,7 @@ export default function SettingsPage() {
                   { key: "payouts", label: "Payout Alerts", desc: "Get notified when payouts are processed" },
                   { key: "reminders", label: "Smart Reminders", desc: "Receive intelligent savings reminders" },
                   { key: "groupActivity", label: "Group Activity", desc: "Updates about your group members" },
-                  { key: "marketing", label: "Promotions & Updates", desc: "News and promotional offers from My Ajo" },
+                  { key: "marketing", label: "Promotions & Updates", desc: "News and promotional offers" },
                 ].map((item) => (
                   <div key={item.key} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
                     <div>

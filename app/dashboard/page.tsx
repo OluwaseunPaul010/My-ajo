@@ -190,65 +190,51 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             {/* Contribution Overview */}
-          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-  <h2 className="text-base font-semibold text-gray-900 mb-4">My Contribution Overview</h2>
-  {!hasGroups ? (
-    <div className="text-center py-8 text-gray-400">
-      <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
-        <Target className="w-8 h-8 text-emerald-300" />
-      </div>
-      <p className="text-sm font-medium text-gray-500">No contributions yet</p>
-      <p className="text-xs text-gray-400 mt-1">Join a group to start contributing!</p>
-      <a href="/groups" className="mt-3 inline-block text-xs text-emerald-500 font-medium hover:underline">
-        Browse Groups →
-      </a>
-    </div>
-  ) : (
-    <>
-      <div className="flex items-center justify-center mb-4">
-        <div className="relative w-32 h-32">
-          <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" strokeWidth="12" />
-            <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="12"
-              strokeDasharray={`${(contributionOverview?.percentage || 0) * 3.14} 314`}
-              strokeLinecap="round" />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-gray-900">
-              {contributionOverview?.paid || 0}/{contributionOverview?.totalExpected || 0}
-            </span>
-            <span className="text-xs text-gray-400">Completed</span>
-          </div>
-        </div>
-      </div>
-      <div className="space-y-2">
-        {[
-          { label: "Paid", value: `₦${(contributionOverview?.totalContributed || 0).toLocaleString()}`, color: "bg-emerald-500" },
-          { label: "Pending", value: `${contributionOverview?.pending || 0} groups`, color: "bg-amber-400" },
-          { label: "Missed", value: `${contributionOverview?.missed || 0}`, color: "bg-red-400" },
-        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${item.color}`} />
-              <span className="text-gray-600">{item.label}</span>
+            <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+              <h2 className="text-base font-semibold text-gray-900 mb-4">My Contribution Overview</h2>
+              {!hasGroups ? (
+                <div className="text-center py-8 text-gray-400">
+                  <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Target className="w-8 h-8 text-emerald-300" />
+                  </div>
+                  <p className="text-sm font-medium text-gray-500">No contributions yet</p>
+                  <p className="text-xs text-gray-400 mt-1">Join a group to start contributing!</p>
+                  <a href="/groups" className="mt-3 inline-block text-xs text-emerald-500 font-medium hover:underline">
+                    Browse Groups →
+                  </a>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="relative w-32 h-32">
+                      <svg className="w-32 h-32 -rotate-90" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#f3f4f6" strokeWidth="12" />
+                        <circle cx="60" cy="60" r="50" fill="none" stroke="#10b981" strokeWidth="12" strokeDasharray="251 314" strokeLinecap="round" />
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-bold text-gray-900">8/10</span>
+                        <span className="text-xs text-gray-400">Completed</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
+                      { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
+                      { label: "Missed", value: "0", color: "bg-red-400" },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-3 h-3 rounded-full ${item.color}`} />
+                          <span className="text-gray-600">{item.label}</span>
+                        </div>
+                        <span className="font-medium text-gray-900">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-            <span className="font-medium text-gray-900">{item.value}</span>
-          </div>
-        ))}
-      </div>
-      {contributionOverview?.percentage === 100 && (
-        <div className="mt-4 p-3 bg-emerald-50 rounded-xl text-xs text-emerald-700 font-medium">
-          🎉 Amazing! You&apos;re fully up to date with all contributions!
-        </div>
-      )}
-      {contributionOverview?.missed > 0 && (
-        <div className="mt-4 p-3 bg-red-50 rounded-xl text-xs text-red-600 font-medium">
-          ⚠️ You have {contributionOverview?.missed} missed contribution(s). This affects your trust score!
-        </div>
-      )}
-    </>
-  )}
-</div>
 
             {/* Payout Rotation */}
             <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
