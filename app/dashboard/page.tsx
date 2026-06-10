@@ -219,8 +219,8 @@ export default function DashboardPage() {
                   </div>
                   <div className="space-y-2">
                     {[
-                      { label: "Paid", value: "₦160,000", color: "bg-emerald-500" },
-                      { label: "Pending", value: "₦40,000", color: "bg-amber-400" },
+                      { label: "Paid", value: "0", color: "bg-emerald-500" },
+                      { label: "Pending", value: "0", color: "bg-amber-400" },
                       { label: "Missed", value: "0", color: "bg-red-400" },
                     ].map((item, i) => (
                       <div key={i} className="flex items-center justify-between text-sm">
