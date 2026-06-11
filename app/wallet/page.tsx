@@ -2,10 +2,11 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
- 
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
-  ArrowUpRight, ArrowDownLeft, Plus, CreditCard, Building, CheckCircle } from "lucide-react" ;
+  ArrowUpRight, ArrowDownLeft, Plus, CreditCard,
+  Building, CheckCircle
+} from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -29,13 +30,13 @@ export default function WalletPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [showFundModal, setShowFundModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [amount, setAmount] = useState("");
   const [banks, setBanks] = useState<any[]>([]);
   const [selectedBank, setSelectedBank] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [verifyingAccount, setVerifyingAccount] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [amount, setAmount] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -43,19 +44,13 @@ export default function WalletPage() {
 
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("/api/user", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .then((data) => {
-          if (data.success) {
-            setWalletBalance(data.user.wallet?.balance || 0);
-          }
+          if (data.success) setWalletBalance(data.user.wallet?.balance || 0);
         });
 
-      fetch("/api/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
@@ -64,13 +59,12 @@ export default function WalletPage() {
             setTotalOut(data.totalOut);
           }
         });
-        fetch("/api/wallet/banks", {
-  headers: { Authorization: `Bearer ${token}` },
-})
-  .then((res) => res.json())
-  .then((data) => {
-    if (data.success) setBanks(data.banks);
-  });
+
+      fetch("/api/wallet/banks", { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) setBanks(data.banks);
+        });
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -101,10 +95,84 @@ export default function WalletPage() {
     ? realTransactions
     : realTransactions.filter((tx) => tx.type === activeTab);
 
+  const handleVerifyAccount = async () => {
+    if (accountNumber.length !== 10 || !selectedBank) {
+      alert("Enter 10-digit account number and select bank");
+      return;
+    }
+    setVerifyingAccount(true);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/wallet/banks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ accountNumber, bankCode: selectedBank }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAccountName(data.accountName);
+      } else {
+        alert(data.error || "Could not verify account");
+      }
+    } catch {
+      alert("Something went wrong");
+    } finally {
+      setVerifyingAccount(false);
+    }
+  };
+
+  const handleWithdraw = async () => {
+    if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
+      alert("Please fill all fields and verify account");
+      return;
+    }
+    if (parseFloat(withdrawAmount) > walletBalance) {
+      alert("Insufficient balance");
+      return;
+    }
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount: withdrawAmount, accountNumber, bankCode: selectedBank, accountName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ ${data.message}`);
+        setShowWithdrawModal(false);
+        window.location.reload();
+      } else {
+        alert(data.error || "Withdrawal failed");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
+
+  const handleFundWallet = async () => {
+    const token = localStorage.getItem("token");
+    if (!token || !amount) return;
+    try {
+      const res = await fetch("/api/payment/initialize", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount: Number(amount) }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = data.authorizationUrl;
+      } else {
+        alert(data.error || "Payment failed");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 flex"></div>
-  );
-  {/* Sidebar */}
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -126,30 +194,33 @@ export default function WalletPage() {
             ))}
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group">
               <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
                 {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+                <div className="text-xs text-emerald-500">View Profile</div>
               </div>
-              <button
-                onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
-                  document.cookie = "token=; path=/; max-age=0";
-                  window.location.href = "/auth/login";
-                }}
-                className="text-gray-400 hover:text-red-500 transition-colors">
-                <LogOut className="w-4 h-4" />
-              </button>
-            </div>
+            </a>
+            <button
+              onClick={() => {
+                localStorage.removeItem("token");
+                localStorage.removeItem("user");
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/auth/login";
+              }}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
 
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
@@ -180,7 +251,7 @@ export default function WalletPage() {
                   <Wallet className="w-6 h-6 text-white" />
                 </div>
               </div>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
                 <button onClick={() => setShowFundModal(true)}
                   className="bg-white text-emerald-600 px-5 py-2.5 rounded-xl font-semibold text-sm hover:bg-emerald-50 transition-colors flex items-center gap-2">
                   <Plus className="w-4 h-4" /> Fund Wallet
@@ -251,9 +322,7 @@ export default function WalletPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-gray-900">{tx.description}</div>
                       <div className="text-xs text-gray-400">
-                        {new Date(tx.createdAt).toLocaleDateString("en-NG", {
-                          day: "numeric", month: "short", year: "numeric"
-                        })}
+                        {new Date(tx.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
                       </div>
                     </div>
                     <div className="text-right">
@@ -287,7 +356,7 @@ export default function WalletPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Amount (₦)</label>
                 <input type="number" value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="₦0.00"
@@ -308,36 +377,14 @@ export default function WalletPage() {
                     { icon: CreditCard, label: "Debit/Credit Card" },
                     { icon: Building, label: "Bank Transfer" },
                   ].map((method, i) => (
-                    <button key={i} className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-xl hover:border-emerald-500 transition-colors">
+                    <div key={i} className="w-full flex items-center gap-3 p-3 border border-gray-200 rounded-xl">
                       <method.icon className="w-5 h-5 text-gray-400" />
                       <span className="text-sm text-gray-700">{method.label}</span>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
-              <button
-                onClick={async () => {
-                  const token = localStorage.getItem("token");
-                  if (!token || !amount) return;
-                  try {
-                    const res = await fetch("/api/payment/initialize", {
-                      method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`,
-                      },
-                      body: JSON.stringify({ amount: Number(amount) }),
-                    });
-                    const data = await res.json();
-                    if (data.success) {
-                      window.location.href = data.authorizationUrl;
-                    } else {
-                      alert(data.error || "Payment failed");
-                    }
-                  } catch {
-                    alert("Something went wrong");
-                  }
-                }}
+              <button onClick={handleFundWallet}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
                 Proceed to Pay with Paystack
               </button>
@@ -348,142 +395,78 @@ export default function WalletPage() {
 
       {/* Withdraw Modal */}
       {showWithdrawModal && (
-  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
-      <div className="flex items-center justify-between mb-6">
-        <h3 className="text-lg font-bold text-gray-900">Withdraw Funds</h3>
-        <button onClick={() => {
-          setShowWithdrawModal(false);
-          setAccountNumber("");
-          setAccountName("");
-          setSelectedBank("");
-          setWithdrawAmount("");
-        }}>
-          <X className="w-5 h-5 text-gray-400" />
-        </button>
-      </div>
-      <div className="space-y-4">
-        <div className="p-4 bg-emerald-50 rounded-xl">
-          <div className="text-xs text-emerald-600 mb-1">Available Balance</div>
-          <div className="text-2xl font-bold text-emerald-600">₦{walletBalance.toLocaleString()}.00</div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw (₦)</label>
-          <input type="number" value={withdrawAmount}
-            onChange={(e) => setWithdrawAmount(e.target.value)}
-            placeholder="e.g. 5000"
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Select Bank</label>
-          <select value={selectedBank}
-            onChange={(e) => { setSelectedBank(e.target.value); setAccountName(""); }}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900">
-            <option value="">Choose your bank</option>
-            {banks.map((bank: any) => (
-              <option key={bank.code} value={bank.code}>{bank.name}</option>
-            ))}
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
-          <div className="flex gap-2">
-            <input type="text" value={accountNumber}
-              onChange={(e) => { setAccountNumber(e.target.value.slice(0, 10)); setAccountName(""); }}
-              placeholder="10-digit account number"
-              maxLength={10}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
-            <button
-              onClick={async () => {
-                if (accountNumber.length !== 10 || !selectedBank) {
-                  alert("Enter 10-digit account number and select bank");
-                  return;
-                }
-                setVerifyingAccount(true);
-                const token = localStorage.getItem("token");
-                try {
-                  const res = await fetch("/api/wallet/banks", {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify({ accountNumber, bankCode: selectedBank }),
-                  });
-                  const data = await res.json();
-                  if (data.success) {
-                    setAccountName(data.accountName);
-                  } else {
-                    alert(data.error || "Could not verify account");
-                  }
-                } catch {
-                  alert("Something went wrong");
-                } finally {
-                  setVerifyingAccount(false);
-                }
-              }}
-              disabled={verifyingAccount || accountNumber.length !== 10 || !selectedBank}
-              className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors">
-              {verifyingAccount ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Verify"}
-            </button>
-          </div>
-        </div>
-
-        {accountName && (
-          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
-            <CheckCircle className="w-4 h-4 text-emerald-500" />
-            <span className="text-sm font-medium text-emerald-700">{accountName}</span>
-          </div>
-        )}
-
-        <button
-          onClick={async () => {
-            if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
-              alert("Please fill all fields and verify account");
-              return;
-            }
-            if (parseFloat(withdrawAmount) > walletBalance) {
-              alert("Insufficient balance");
-              return;
-            }
-            const token = localStorage.getItem("token");
-            try {
-              const res = await fetch("/api/wallet/withdraw", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                  amount: withdrawAmount,
-                  accountNumber,
-                  bankCode: selectedBank,
-                  accountName,
-                }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                alert(`✅ ${data.message}`);
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">Withdraw Funds</h3>
+              <button onClick={() => {
                 setShowWithdrawModal(false);
-                window.location.reload();
-              } else {
-                alert(data.error || "Withdrawal failed");
-              }
-            } catch {
-              alert("Something went wrong");
-            }
-          }}
-          disabled={!accountName || !withdrawAmount}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
-          Withdraw Now
-        </button>
-      </div>
-    </motion.div>
-    
+                setAccountNumber("");
+                setAccountName("");
+                setSelectedBank("");
+                setWithdrawAmount("");
+              }}>
+                <X className="w-5 h-5 text-gray-400" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div className="p-4 bg-emerald-50 rounded-xl">
+                <div className="text-xs text-emerald-600 mb-1">Available Balance</div>
+                <div className="text-2xl font-bold text-emerald-600">₦{walletBalance.toLocaleString()}.00</div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw (₦)</label>
+                <input type="number" value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="e.g. 5000"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Select Bank</label>
+                <select value={selectedBank}
+                  onChange={(e) => { setSelectedBank(e.target.value); setAccountName(""); }}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900">
+                  <option value="">Choose your bank</option>
+                  {banks.map((bank: any) => (
+                    <option key={bank.code} value={bank.code}>{bank.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+                <div className="flex gap-2">
+                  <input type="text" value={accountNumber}
+                    onChange={(e) => { setAccountNumber(e.target.value.slice(0, 10)); setAccountName(""); }}
+                    placeholder="10-digit account number"
+                    maxLength={10}
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
+                  <button onClick={handleVerifyAccount}
+                    disabled={verifyingAccount || accountNumber.length !== 10 || !selectedBank}
+                    className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors">
+                    {verifyingAccount
+                      ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : "Verify"}
+                  </button>
+                </div>
+              </div>
+              {accountName && (
+                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4 text-emerald-500" />
+                  <span className="text-sm font-medium text-emerald-700">{accountName}</span>
+                </div>
+              )}
+              <button onClick={handleWithdraw}
+                disabled={!accountName || !withdrawAmount}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
+                Withdraw Now
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
+    </div>
+  );
+}
