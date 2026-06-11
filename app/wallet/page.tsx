@@ -6,7 +6,6 @@ import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
   ArrowUpRight, ArrowDownLeft, Plus, CreditCard, Building, CheckCircle } from "lucide-react" ;
-} from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
@@ -103,8 +102,9 @@ export default function WalletPage() {
     : realTransactions.filter((tx) => tx.type === activeTab);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
+    <div className="min-h-screen bg-gray-50 flex"></div>
+  );
+  {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -485,5 +485,5 @@ export default function WalletPage() {
         </button>
       </div>
     </motion.div>
-  </div>
-)}
+    
+      )}
