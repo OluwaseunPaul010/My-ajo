@@ -315,6 +315,35 @@ export default function GroupDetailPage() {
                   className="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition-colors flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" /> Group Chat
                 </a>
+                {isAdmin && (
+  <button
+    onClick={async () => {
+      if (!confirm(`Process payout of ₦${((group.contribution || 0) * (group.members?.length || 1)).toLocaleString()} to ${group.members?.[0]?.user?.fullName}?`)) return;
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch("/api/payout", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ groupId }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          alert(`✅ ${data.message}`);
+          window.location.reload();
+        } else {
+          alert(data.error || "Payout failed");
+        }
+      } catch {
+        alert("Something went wrong");
+      }
+    }}
+    className="bg-amber-400 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+    <Zap className="w-4 h-4" /> Process Payout
+  </button>
+)}
               </div>
             </div>
           </motion.div>

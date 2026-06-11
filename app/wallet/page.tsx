@@ -2,9 +2,10 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import {
+ 
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
-  ArrowUpRight, ArrowDownLeft, Plus, CreditCard, Building
+  ArrowUpRight, ArrowDownLeft, Plus, CreditCard, Building, CheckCircle } from "lucide-react" ;
 } from "lucide-react";
 
 const navItems = [
@@ -29,6 +30,12 @@ export default function WalletPage() {
   const [activeTab, setActiveTab] = useState("all");
   const [showFundModal, setShowFundModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [banks, setBanks] = useState<any[]>([]);
+  const [selectedBank, setSelectedBank] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [verifyingAccount, setVerifyingAccount] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [amount, setAmount] = useState("");
 
   useEffect(() => {
@@ -58,6 +65,13 @@ export default function WalletPage() {
             setTotalOut(data.totalOut);
           }
         });
+        fetch("/api/wallet/banks", {
+  headers: { Authorization: `Bearer ${token}` },
+})
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.success) setBanks(data.banks);
+  });
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -334,46 +348,142 @@ export default function WalletPage() {
 
       {/* Withdraw Modal */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-bold text-gray-900">Withdraw Funds</h3>
-              <button onClick={() => setShowWithdrawModal(false)}>
-                <X className="w-5 h-5 text-gray-400" />
-              </button>
-            </div>
-            <div className="space-y-4">
-              <div className="p-4 bg-emerald-50 rounded-xl">
-                <div className="text-xs text-emerald-600 mb-1">Available Balance</div>
-                <div className="text-2xl font-bold text-emerald-600">₦{walletBalance.toLocaleString()}.00</div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw</label>
-                <input type="number" value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  placeholder="₦0.00"
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Bank Account</label>
-                <div className="p-3 border border-gray-200 rounded-xl flex items-center gap-3">
-                  <Building className="w-5 h-5 text-gray-400" />
-                  <div>
-                    <div className="text-sm font-medium text-gray-900">Add Bank Account</div>
-                    <div className="text-xs text-gray-400">No bank account linked yet</div>
-                  </div>
-                </div>
-              </div>
-              <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
-                Withdraw Now
-              </button>
-            </div>
-          </motion.div>
+  <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-bold text-gray-900">Withdraw Funds</h3>
+        <button onClick={() => {
+          setShowWithdrawModal(false);
+          setAccountNumber("");
+          setAccountName("");
+          setSelectedBank("");
+          setWithdrawAmount("");
+        }}>
+          <X className="w-5 h-5 text-gray-400" />
+        </button>
+      </div>
+      <div className="space-y-4">
+        <div className="p-4 bg-emerald-50 rounded-xl">
+          <div className="text-xs text-emerald-600 mb-1">Available Balance</div>
+          <div className="text-2xl font-bold text-emerald-600">₦{walletBalance.toLocaleString()}.00</div>
         </div>
-      )}
-    </div>
-  );
-}
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Amount to Withdraw (₦)</label>
+          <input type="number" value={withdrawAmount}
+            onChange={(e) => setWithdrawAmount(e.target.value)}
+            placeholder="e.g. 5000"
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Select Bank</label>
+          <select value={selectedBank}
+            onChange={(e) => { setSelectedBank(e.target.value); setAccountName(""); }}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900">
+            <option value="">Choose your bank</option>
+            {banks.map((bank: any) => (
+              <option key={bank.code} value={bank.code}>{bank.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Account Number</label>
+          <div className="flex gap-2">
+            <input type="text" value={accountNumber}
+              onChange={(e) => { setAccountNumber(e.target.value.slice(0, 10)); setAccountName(""); }}
+              placeholder="10-digit account number"
+              maxLength={10}
+              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900" />
+            <button
+              onClick={async () => {
+                if (accountNumber.length !== 10 || !selectedBank) {
+                  alert("Enter 10-digit account number and select bank");
+                  return;
+                }
+                setVerifyingAccount(true);
+                const token = localStorage.getItem("token");
+                try {
+                  const res = await fetch("/api/wallet/banks", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ accountNumber, bankCode: selectedBank }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setAccountName(data.accountName);
+                  } else {
+                    alert(data.error || "Could not verify account");
+                  }
+                } catch {
+                  alert("Something went wrong");
+                } finally {
+                  setVerifyingAccount(false);
+                }
+              }}
+              disabled={verifyingAccount || accountNumber.length !== 10 || !selectedBank}
+              className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white px-4 py-3 rounded-xl text-sm font-medium transition-colors">
+              {verifyingAccount ? <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : "Verify"}
+            </button>
+          </div>
+        </div>
+
+        {accountName && (
+          <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center gap-2">
+            <CheckCircle className="w-4 h-4 text-emerald-500" />
+            <span className="text-sm font-medium text-emerald-700">{accountName}</span>
+          </div>
+        )}
+
+        <button
+          onClick={async () => {
+            if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
+              alert("Please fill all fields and verify account");
+              return;
+            }
+            if (parseFloat(withdrawAmount) > walletBalance) {
+              alert("Insufficient balance");
+              return;
+            }
+            const token = localStorage.getItem("token");
+            try {
+              const res = await fetch("/api/wallet/withdraw", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                  amount: withdrawAmount,
+                  accountNumber,
+                  bankCode: selectedBank,
+                  accountName,
+                }),
+              });
+              const data = await res.json();
+              if (data.success) {
+                alert(`✅ ${data.message}`);
+                setShowWithdrawModal(false);
+                window.location.reload();
+              } else {
+                alert(data.error || "Withdrawal failed");
+              }
+            } catch {
+              alert("Something went wrong");
+            }
+          }}
+          disabled={!accountName || !withdrawAmount}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
+          Withdraw Now
+        </button>
+      </div>
+    </motion.div>
+  </div>
+)}
