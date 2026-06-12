@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { BarChart3 } from "lucide-react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Plus, ArrowUpRight,
@@ -18,6 +19,7 @@ const navItems = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
+  { icon: BarChart3, label: "Analytics", href: "/analytics" },
 ];
 
 export default function DashboardPage() {
