@@ -12,6 +12,9 @@ const protectedRoutes = [
   "/goals",
   "/support",
   "/admin",
+  "/profile",
+  "/analytics",
+  "/search",
 ];
 
 const authRoutes = ["/auth/login", "/auth/register"];

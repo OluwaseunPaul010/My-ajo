@@ -142,27 +142,37 @@ export default function DashboardPage() {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
-            <Menu className="w-6 h-6 text-gray-600" />
-          </button>
-          <div>
-            <h1 className="text-lg font-bold text-gray-900">{greeting()}, {user?.fullName?.split(" ")[0] || "there"} 👋</h1>
-            <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your savings today.</p>
-          </div>
-          <div className="ml-auto flex items-center gap-3">
-            <a href="/notifications" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors">
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
-                  {unreadCount}
-                </span>
-              )}
-            </a>
-            <a href="/wallet" className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2">
-              <Wallet className="w-4 h-4" /> Fund Wallet
-            </a>
-          </div>
-        </header>
+  <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
+    <Menu className="w-6 h-6 text-gray-600" />
+  </button>
+  <div className="hidden md:block">
+    <h1 className="text-lg font-bold text-gray-900">{greeting()}, {user?.fullName?.split(" ")[0] || "there"} 👋</h1>
+    <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your savings today.</p>
+  </div>
+  <div className="flex-1 max-w-md mx-auto md:mx-0 md:ml-auto md:flex-none flex items-center gap-3">
+    <div className="relative flex-1 md:w-64">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      <input
+        type="text"
+        placeholder="Search groups, transactions..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
+      />
+    </div>
+    <a href="/notifications" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors">
+      <Bell className="w-5 h-5" />
+      {unreadCount > 0 && (
+        <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center font-bold">
+          {unreadCount}
+        </span>
+      )}
+    </a>
+    <a href="/wallet" className="hidden sm:flex bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors items-center gap-2">
+      <Wallet className="w-4 h-4" /> Fund Wallet
+    </a>
+  </div>
+</header>
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
           {/* Stats */}
