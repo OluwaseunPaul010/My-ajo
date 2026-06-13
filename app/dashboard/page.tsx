@@ -2,6 +2,7 @@
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { BarChart3 } from "lucide-react";
+import { Search } from "lucide-react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Plus, ArrowUpRight,
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   const [realTransactions, setRealTransactions] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [contributionOverview, setContributionOverview] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const greeting = () => {
     const hour = new Date().getHours();
