@@ -36,6 +36,9 @@ emailVerified    Boolean  @default(false)
 emailVerifyToken String?
 loginAttempts    Int      @default(0)
 lockedUntil      DateTime?
+referralCode     String?  @unique
+referredBy       String?
+referralEarnings Float    @default(0)
 }
 
 model Wallet {

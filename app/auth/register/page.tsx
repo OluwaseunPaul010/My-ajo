@@ -11,6 +11,7 @@ export default function RegisterPage() {
     email: "",
     phone: "",
     password: "",
+    referralCode: "",
   });
 
 const handleSubmit = async (e: React.FormEvent) => {
@@ -119,6 +120,19 @@ const handleSubmit = async (e: React.FormEvent) => {
                 </button>
               </div>
             </div>
+
+            <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Referral Code <span className="text-gray-400">(Optional)</span>
+  </label>
+  <input
+    type="text"
+    value={form.referralCode}
+    onChange={(e) => setForm({ ...form, referralCode: e.target.value.toUpperCase() })}
+    placeholder="e.g. PAUL-AB12"
+    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 placeholder-gray-400 transition-all font-mono"
+  />
+</div>
 
             <p className="text-xs text-gray-400">
               By creating an account, you agree to our{" "}
