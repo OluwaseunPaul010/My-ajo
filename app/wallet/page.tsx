@@ -5,7 +5,7 @@ import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
   ArrowUpRight, ArrowDownLeft, Plus, CreditCard,
-  Building, CheckCircle
+  Building, CheckCircle, ShieldCheck
 } from "lucide-react";
 
 const navItems = [
@@ -37,6 +37,7 @@ export default function WalletPage() {
   const [accountName, setAccountName] = useState("");
   const [verifyingAccount, setVerifyingAccount] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawPin, setWithdrawPin] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -68,10 +69,7 @@ export default function WalletPage() {
     }
 
     const urlParams = new URLSearchParams(window.location.search);
-    const reference = urlParams.get("reference");
-    const trxref = urlParams.get("trxref");
-    const ref = reference || trxref;
-
+    const ref = urlParams.get("reference") || urlParams.get("trxref");
     if (ref) {
       fetch("/api/payment/verify", {
         method: "POST",
@@ -84,8 +82,6 @@ export default function WalletPage() {
             alert(`✅ Wallet funded! ₦${data.amount} added!`);
             window.history.replaceState({}, "", "/wallet");
             window.location.reload();
-          } else {
-            alert("Payment verification failed: " + data.error);
           }
         });
     }
@@ -120,51 +116,52 @@ export default function WalletPage() {
       setVerifyingAccount(false);
     }
   };
-  const [withdrawPin, setWithdrawPin] = useState("");
-  const [showPinInput, setShowPinInput] = useState(false);
 
   const handleWithdraw = async () => {
-  if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
-    alert("Please fill all fields and verify account");
-    return;
-  }
-  if (parseFloat(withdrawAmount) > walletBalance) {
-    alert("Insufficient balance");
-    return;
-  }
-
-  const token = localStorage.getItem("token");
-
-  const pinRes = await fetch("/api/auth/pin", {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ pin: withdrawPin }),
-  });
-  const pinData = await pinRes.json();
-
-  if (!pinData.success) {
-    alert(pinData.error || "Incorrect PIN");
-    return;
-  }
-
-  try {
-    const res = await fetch("/api/wallet/withdraw", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount: withdrawAmount, accountNumber, bankCode: selectedBank, accountName }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      alert(`✅ ${data.message}`);
-      setShowWithdrawModal(false);
-      window.location.reload();
-    } else {
-      alert(data.error || "Withdrawal failed");
+    if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
+      alert("Please fill all fields and verify account");
+      return;
     }
-  } catch {
-    alert("Something went wrong");
-  }
-};
+    if (parseFloat(withdrawAmount) > walletBalance) {
+      alert("Insufficient balance");
+      return;
+    }
+    if (!withdrawPin || withdrawPin.length !== 4) {
+      alert("Please enter your 4-digit transaction PIN");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const pinRes = await fetch("/api/auth/pin", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pin: withdrawPin }),
+      });
+      const pinData = await pinRes.json();
+      if (!pinData.success) {
+        alert(pinData.error || "Incorrect PIN");
+        return;
+      }
+
+      const res = await fetch("/api/wallet/withdraw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount: withdrawAmount, accountNumber, bankCode: selectedBank, accountName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ ${data.message}`);
+        setShowWithdrawModal(false);
+        window.location.reload();
+      } else {
+        alert(data.error || "Withdrawal failed");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
 
   const handleFundWallet = async () => {
     const token = localStorage.getItem("token");
@@ -188,7 +185,6 @@ export default function WalletPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -250,7 +246,6 @@ export default function WalletPage() {
         </header>
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
-          {/* Wallet Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -280,7 +275,6 @@ export default function WalletPage() {
             </div>
           </motion.div>
 
-          {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
             {[
               { label: "Total Funded", value: `₦${totalIn.toLocaleString()}`, icon: ArrowDownLeft, color: "text-emerald-500 bg-emerald-100" },
@@ -305,16 +299,13 @@ export default function WalletPage() {
             ))}
           </div>
 
-          {/* Transactions */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
             <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-gray-900">Transaction History</h2>
-              </div>
+              <h2 className="text-base font-semibold text-gray-900 mb-4">Transaction History</h2>
               <div className="flex gap-2">
                 {["all", "credit", "debit"].map((tab) => (
                   <button key={tab} onClick={() => setActiveTab(tab)}
-                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors capitalize ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
                     {tab === "all" ? "All" : tab === "credit" ? "Money In" : "Money Out"}
                   </button>
                 ))}
@@ -366,7 +357,7 @@ export default function WalletPage() {
             className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900">Fund Wallet</h3>
-              <button onClick={() => setShowFundModal(false)}>
+              <button onClick={() => { setShowFundModal(false); setAmount(""); }}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>
             </div>
@@ -424,6 +415,7 @@ export default function WalletPage() {
                 setAccountName("");
                 setSelectedBank("");
                 setWithdrawAmount("");
+                setWithdrawPin("");
               }}>
                 <X className="w-5 h-5 text-gray-400" />
               </button>
@@ -475,20 +467,20 @@ export default function WalletPage() {
                 </div>
               )}
               <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">Transaction PIN</label>
-  <input type="password" value={withdrawPin}
-    onChange={(e) => setWithdrawPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-    placeholder="Enter 4-digit PIN" maxLength={4} inputMode="numeric"
-    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
-  <p className="text-xs text-gray-400 mt-1 text-center">
-    Don&apos;t have a PIN? Set one in{" "}
-    <a href="/settings" className="text-emerald-500 hover:underline">Settings → Security</a>
-  </p>
-</div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Transaction PIN</label>
+                <input type="password" value={withdrawPin}
+                  onChange={(e) => setWithdrawPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                  placeholder="••••" maxLength={4} inputMode="numeric"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+                <p className="text-xs text-gray-400 mt-1 text-center">
+                  No PIN?{" "}
+                  <a href="/settings" className="text-emerald-500 hover:underline">Set one in Settings → Security</a>
+                </p>
+              </div>
               <button onClick={handleWithdraw}
-                disabled={!accountName || !withdrawAmount}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
-                Withdraw Now
+                disabled={!accountName || !withdrawAmount || withdrawPin.length !== 4}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                <ShieldCheck className="w-4 h-4" /> Withdraw Now
               </button>
             </div>
           </motion.div>

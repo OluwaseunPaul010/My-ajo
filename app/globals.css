@@ -25,3 +25,9 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+@import "tailwindcss";
+
+.dark {
+  color-scheme: dark;
+}

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (user.lockedUntil && user.lockedUntil > new Date()) {
       const minutesLeft = Math.ceil((user.lockedUntil.getTime() - Date.now()) / 60000);
       return NextResponse.json({
-        error: `Account locked due to too many failed attempts. Try again in ${minutesLeft} minute(s).`,
+        error: `Account locked. Try again in ${minutesLeft} minute(s).`,
       }, { status: 423 });
     }
 
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
           data: {
             userId: user.id,
             title: "Account Temporarily Locked 🔒",
-            message: "Your account has been locked for 30 minutes due to 5 failed login attempts. If this wasn't you, change your password immediately.",
+            message: "Your account has been locked for 30 minutes due to 5 failed login attempts.",
             type: "alert",
           },
         });
@@ -64,6 +64,15 @@ export async function POST(req: NextRequest) {
       data: { loginAttempts: 0, lockedUntil: null },
     });
 
+    await prisma.activityLog.create({
+      data: {
+        userId: user.id,
+        action: "Login",
+        details: "Successful login",
+        device: req.headers.get("user-agent")?.slice(0, 100) || "Unknown",
+      },
+    });
+
     const token = generateToken(user.id);
 
     return NextResponse.json({
@@ -79,6 +88,8 @@ export async function POST(req: NextRequest) {
         emailVerified: user.emailVerified,
         bvnVerified: user.bvnVerified,
         trustScore: user.trustScore,
+        twoFactorEnabled: user.twoFactorEnabled,
+        transactionPin: !!user.transactionPin,
       },
     });
   } catch (error) {

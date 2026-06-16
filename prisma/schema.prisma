@@ -44,6 +44,7 @@ twoFactorEnabled Boolean  @default(false)
 twoFactorCode    String?
 twoFactorExpiry  DateTime?
 transactionPin   String?
+activityLogs  ActivityLog[]
 }
 
 model Wallet {
@@ -175,5 +176,17 @@ model Announcement {
   createdAt DateTime @default(now())
 
   group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  details   String?
+  ipAddress String?
+  device    String?
+  createdAt DateTime @default(now())
+
   user      User     @relation(fields: [userId], references: [id])
 }

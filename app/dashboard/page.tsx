@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { BarChart3 } from "lucide-react";
 import { Search } from "lucide-react";
+import { useDarkMode } from "@/lib/useDarkMode";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Plus, ArrowUpRight,
@@ -30,6 +31,7 @@ export default function DashboardPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [contributionOverview, setContributionOverview] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const { darkMode, toggleDarkMode } = useDarkMode();
 
   const greeting = () => {
     const hour = new Date().getHours();
@@ -162,6 +164,10 @@ export default function DashboardPage() {
         className="w-full pl-9 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
       />
     </div>
+    <button onClick={toggleDarkMode}
+  className="p-2 text-gray-500 hover:text-emerald-500 transition-colors">
+  {darkMode ? "☀️" : "🌙"}
+</button>
     <a href="/notifications" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors">
       <Bell className="w-5 h-5" />
       {unreadCount > 0 && (

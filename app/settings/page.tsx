@@ -1,12 +1,11 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
-import { ShieldCheck } from "lucide-react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
   User, Lock, Eye, EyeOff, CheckCircle, Camera,
-  AlertCircle, CreditCard
+  AlertCircle, CreditCard, ShieldCheck, Moon, Sun
 } from "lucide-react";
 
 const navItems = [
@@ -19,6 +18,7 @@ const navItems = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings", active: true },
+  { icon: Activity, label: "Activity Log", href: "/activity" },
 ];
 
 export default function SettingsPage() {
@@ -33,19 +33,24 @@ export default function SettingsPage() {
   const [verifyCode, setVerifyCode] = useState("");
   const [bvn, setBvn] = useState("");
   const [showVerifyInput, setShowVerifyInput] = useState(false);
-  const [profileForm, setProfileForm] = useState({ fullName: "", email: "", phone: "" });
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
-  const [notifications, setNotifications] = useState({
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [twoFAEnabled, setTwoFAEnabled] = useState(false);
   const [pinSet, setPinSet] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
+  const [profileForm, setProfileForm] = useState({ fullName: "", email: "", phone: "" });
+  const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [notifications, setNotifications] = useState({
     contributions: true, payouts: true, reminders: true, groupActivity: true, marketing: false,
   });
 
   useEffect(() => {
-    setTwoFAEnabled(data.user.twoFactorEnabled || false);
-    setPinSet(!!data.user.transactionPin);
+    const saved = localStorage.getItem("darkMode");
+    if (saved === "true") {
+      setDarkMode(true);
+      document.documentElement.classList.add("dark");
+    }
+
     const token = localStorage.getItem("token");
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
@@ -58,6 +63,8 @@ export default function SettingsPage() {
               email: data.user.email || "",
               phone: data.user.phone || "",
             });
+            setTwoFAEnabled(data.user.twoFactorEnabled || false);
+            setPinSet(!!data.user.transactionPin);
             localStorage.setItem("user", JSON.stringify(data.user));
           }
         });
@@ -76,9 +83,22 @@ export default function SettingsPage() {
       .then((data) => {
         if (data.success) {
           setUser(data.user);
+          setPinSet(!!data.user.transactionPin);
+          setTwoFAEnabled(data.user.twoFactorEnabled || false);
           localStorage.setItem("user", JSON.stringify(data.user));
         }
       });
+  };
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem("darkMode", newMode.toString());
+    if (newMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   };
 
   const handleProfileUpdate = async () => {
@@ -206,9 +226,59 @@ export default function SettingsPage() {
     }
   };
 
+  const handleSetPin = async () => {
+    if (pin !== confirmPin) {
+      showMsg("PINs do not match", "error");
+      return;
+    }
+    if (pin.length !== 4) {
+      showMsg("PIN must be exactly 4 digits", "error");
+      return;
+    }
+    setLoading(true);
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/auth/pin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ pin }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        showMsg("Transaction PIN set successfully!", "success");
+        setPin("");
+        setConfirmPin("");
+        setPinSet(true);
+      } else {
+        showMsg(data.error || "Failed to set PIN", "error");
+      }
+    } catch {
+      showMsg("Something went wrong", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleToggle2FA = async () => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/auth/2fa", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled: !twoFAEnabled }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTwoFAEnabled(!twoFAEnabled);
+        showMsg(`2FA ${!twoFAEnabled ? "enabled" : "disabled"} successfully!`, "success");
+      }
+    } catch {
+      showMsg("Something went wrong", "error");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -254,7 +324,9 @@ export default function SettingsPage() {
         </div>
       </aside>
 
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
@@ -265,6 +337,9 @@ export default function SettingsPage() {
             <h1 className="text-lg font-bold text-gray-900">Settings</h1>
             <p className="text-sm text-gray-500">Manage your account preferences</p>
           </div>
+          <button onClick={toggleDarkMode} className="ml-auto p-2 text-gray-500 hover:text-emerald-500 transition-colors">
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </header>
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
@@ -286,11 +361,11 @@ export default function SettingsPage() {
           {/* Tabs */}
           <div className="flex gap-2 mb-6 flex-wrap">
             {[
-             { id: "profile", label: "Profile", icon: User },
-             { id: "password", label: "Password", icon: Lock },
-             { id: "verification", label: "Verification", icon: Shield },
-             { id: "security", label: "Security", icon: ShieldCheck },
-             { id: "notifications", label: "Notifications", icon: Bell },
+              { id: "profile", label: "Profile", icon: User },
+              { id: "password", label: "Password", icon: Lock },
+              { id: "verification", label: "Verification", icon: Shield },
+              { id: "security", label: "Security", icon: ShieldCheck },
+              { id: "notifications", label: "Notifications", icon: Bell },
             ].map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === tab.id ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
@@ -317,7 +392,7 @@ export default function SettingsPage() {
                 <div>
                   <div className="text-sm font-semibold text-gray-900">{user?.fullName}</div>
                   <div className="text-xs text-gray-400">{user?.email}</div>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user?.isVerified ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
                       {user?.isVerified ? "✅ Verified" : "⚠️ Unverified"}
                     </span>
@@ -404,8 +479,6 @@ export default function SettingsPage() {
           {activeTab === "verification" && (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
               className="space-y-6">
-
-              {/* Status Cards */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <h2 className="text-base font-semibold text-gray-900 mb-4">Verification Status</h2>
                 <div className="space-y-3">
@@ -432,7 +505,6 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              {/* Email Verification */}
               {!user?.emailVerified && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                   <h2 className="text-base font-semibold text-gray-900 mb-2">Verify Email</h2>
@@ -446,8 +518,7 @@ export default function SettingsPage() {
                     <div className="space-y-3">
                       <input type="text" value={verifyCode}
                         onChange={(e) => setVerifyCode(e.target.value)}
-                        placeholder="Enter 6-digit code"
-                        maxLength={6}
+                        placeholder="Enter 6-digit code" maxLength={6}
                         className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
                       <button onClick={handleVerifyEmail} disabled={loading || verifyCode.length !== 6}
                         className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">
@@ -458,7 +529,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* BVN Verification */}
               {!user?.bvnVerified && (
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                   <h2 className="text-base font-semibold text-gray-900 mb-2">Verify BVN</h2>
@@ -469,8 +539,7 @@ export default function SettingsPage() {
                   <div className="space-y-3">
                     <input type="text" value={bvn}
                       onChange={(e) => setBvn(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                      placeholder="Enter your 11-digit BVN"
-                      maxLength={11}
+                      placeholder="Enter your 11-digit BVN" maxLength={11}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-xl font-mono tracking-widest" />
                     <button onClick={handleBvnVerify} disabled={loading || bvn.length !== 11}
                       className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
@@ -482,7 +551,6 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* Fully Verified */}
               {user?.bvnVerified && user?.emailVerified && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-6 text-center">
                   <CheckCircle className="w-12 h-12 text-emerald-500 mx-auto mb-3" />
@@ -490,6 +558,86 @@ export default function SettingsPage() {
                   <p className="text-sm text-emerald-600 mt-1">Your account is fully verified with all features unlocked!</p>
                 </div>
               )}
+            </motion.div>
+          )}
+
+          {/* Security Tab */}
+          {activeTab === "security" && (
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+              className="space-y-6">
+              {/* 2FA */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <div className="flex items-center justify-between mb-2">
+                  <h2 className="text-base font-semibold text-gray-900">Two-Factor Authentication</h2>
+                  <button onClick={handleToggle2FA}
+                    className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${twoFAEnabled ? "bg-emerald-500" : "bg-gray-300"}`}>
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${twoFAEnabled ? "translate-x-7" : "translate-x-1"}`} />
+                  </button>
+                </div>
+                <p className="text-sm text-gray-500 mb-4">
+                  {twoFAEnabled
+                    ? "✅ 2FA is enabled. You'll receive a code by email every time you log in."
+                    : "Enable 2FA to add an extra layer of security to your account."}
+                </p>
+                <div className={`p-3 rounded-xl text-xs font-medium ${twoFAEnabled ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+                  {twoFAEnabled
+                    ? "🔐 Your account is protected with two-factor authentication"
+                    : "⚠️ Your account is not protected with 2FA. We recommend enabling it."}
+                </div>
+              </div>
+
+              {/* Transaction PIN */}
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <h2 className="text-base font-semibold text-gray-900 mb-2">Transaction PIN</h2>
+                <p className="text-sm text-gray-500 mb-4">
+                  {pinSet
+                    ? "✅ Your transaction PIN is set. It will be required for all withdrawals."
+                    : "Set a 4-digit PIN to confirm all withdrawals and sensitive transactions."}
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {pinSet ? "New PIN" : "Create PIN"} (4 digits)
+                    </label>
+                    <input type="password" value={pin} inputMode="numeric"
+                      onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="••••" maxLength={4}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+                    <input type="password" value={confirmPin} inputMode="numeric"
+                      onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      placeholder="••••" maxLength={4}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+                  </div>
+                  {pin && confirmPin && pin !== confirmPin && (
+                    <p className="text-xs text-red-500">PINs do not match</p>
+                  )}
+                  <button onClick={handleSetPin}
+                    disabled={loading || pin.length !== 4 || pin !== confirmPin}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+                    {loading
+                      ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      : <><ShieldCheck className="w-4 h-4" /> {pinSet ? "Update PIN" : "Set Transaction PIN"}</>}
+                  </button>
+                </div>
+              </div>
+
+              {/* Activity Log Link */}
+              <a href="/activity"
+                className="flex items-center justify-between p-5 bg-white rounded-2xl border border-gray-100 shadow-sm hover:border-emerald-200 transition-colors group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                    <Shield className="w-5 h-5 text-blue-500" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-gray-900">Activity Log</div>
+                    <div className="text-xs text-gray-400">View all your account actions and login history</div>
+                  </div>
+                </div>
+                <span className="text-emerald-500 text-sm font-medium group-hover:underline">View →</span>
+              </a>
             </motion.div>
           )}
 
@@ -518,6 +666,22 @@ export default function SettingsPage() {
                     </button>
                   </div>
                 ))}
+
+                {/* Dark Mode Toggle */}
+                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
+                  <div className="flex items-center gap-3">
+                    {darkMode ? <Moon className="w-5 h-5 text-indigo-500" /> : <Sun className="w-5 h-5 text-amber-500" />}
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">Dark Mode</div>
+                      <div className="text-xs text-gray-400 mt-0.5">Switch between light and dark theme</div>
+                    </div>
+                  </div>
+                  <button onClick={toggleDarkMode}
+                    className={`relative w-11 h-6 rounded-full transition-colors ${darkMode ? "bg-emerald-500" : "bg-gray-300"}`}>
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${darkMode ? "translate-x-6" : "translate-x-1"}`} />
+                  </button>
+                </div>
+
                 <button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-xl font-semibold transition-colors">
                   Save Preferences
                 </button>
@@ -528,117 +692,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-  {activeTab === "security" && (
-  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-    className="space-y-6">
-
-    {/* 2FA */}
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-base font-semibold text-gray-900">Two-Factor Authentication</h2>
-        <button
-          onClick={async () => {
-            const token = localStorage.getItem("token");
-            try {
-              const res = await fetch("/api/auth/2fa", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ enabled: !twoFAEnabled }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                setTwoFAEnabled(!twoFAEnabled);
-                showMsg(`2FA ${!twoFAEnabled ? "enabled" : "disabled"} successfully!`, "success");
-              }
-            } catch {
-              showMsg("Something went wrong", "error");
-            }
-          }}
-          className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${twoFAEnabled ? "bg-emerald-500" : "bg-gray-300"}`}>
-          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${twoFAEnabled ? "translate-x-7" : "translate-x-1"}`} />
-        </button>
-      </div>
-      <p className="text-sm text-gray-500 mb-4">
-        {twoFAEnabled
-          ? "✅ 2FA is enabled. You'll receive a code by email every time you log in."
-          : "Enable 2FA to add an extra layer of security to your account."}
-      </p>
-      <div className={`p-3 rounded-xl text-xs font-medium ${twoFAEnabled ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
-        {twoFAEnabled
-          ? "🔐 Your account is protected with two-factor authentication"
-          : "⚠️ Your account is not protected with 2FA. We recommend enabling it."}
-      </div>
-    </div>
-
-    {/* Transaction PIN */}
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-      <h2 className="text-base font-semibold text-gray-900 mb-2">Transaction PIN</h2>
-      <p className="text-sm text-gray-500 mb-4">
-        {pinSet
-          ? "✅ Your transaction PIN is set. It will be required for all withdrawals."
-          : "Set a 4-digit PIN to confirm all withdrawals and sensitive transactions."}
-      </p>
-      <div className="space-y-3">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {pinSet ? "New PIN" : "Create PIN"} (4 digits)
-          </label>
-          <input type="password" value={pin} inputMode="numeric"
-            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            placeholder="••••" maxLength={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
-          <input type="password" value={confirmPin} inputMode="numeric"
-            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
-            placeholder="••••" maxLength={4}
-            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
-        </div>
-        {pin && confirmPin && pin !== confirmPin && (
-          <p className="text-xs text-red-500">PINs do not match</p>
-        )}
-        <button
-          onClick={async () => {
-            if (pin !== confirmPin) {
-              showMsg("PINs do not match", "error");
-              return;
-            }
-            if (pin.length !== 4) {
-              showMsg("PIN must be exactly 4 digits", "error");
-              return;
-            }
-            setLoading(true);
-            const token = localStorage.getItem("token");
-            try {
-              const res = await fetch("/api/auth/pin", {
-                method: "POST",
-                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-                body: JSON.stringify({ pin }),
-              });
-              const data = await res.json();
-              if (data.success) {
-                showMsg("Transaction PIN set successfully!", "success");
-                setPin("");
-                setConfirmPin("");
-                setPinSet(true);
-              } else {
-                showMsg(data.error || "Failed to set PIN", "error");
-              }
-            } catch {
-              showMsg("Something went wrong", "error");
-            } finally {
-              setLoading(false);
-            }
-          }}
-          disabled={loading || pin.length !== 4 || pin !== confirmPin}
-          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-          {loading
-            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            : <><ShieldCheck className="w-4 h-4" /> {pinSet ? "Update PIN" : "Set Transaction PIN"}</>}
-        </button>
-      </div>
-    </div>
-  </motion.div>
-)}
 }
