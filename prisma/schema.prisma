@@ -45,6 +45,9 @@ twoFactorCode    String?
 twoFactorExpiry  DateTime?
 transactionPin   String?
 activityLogs  ActivityLog[]
+isPremium         Boolean  @default(false)
+premiumExpiry     DateTime?
+premiumReference  String?
 }
 
 model Wallet {
