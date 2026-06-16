@@ -40,6 +40,10 @@ referralCode     String?  @unique
 referredBy       String?
 referralEarnings Float    @default(0)
 announcements Announcement[]
+twoFactorEnabled Boolean  @default(false)
+twoFactorCode    String?
+twoFactorExpiry  DateTime?
+transactionPin   String?
 }
 
 model Wallet {

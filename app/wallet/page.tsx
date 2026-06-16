@@ -120,35 +120,51 @@ export default function WalletPage() {
       setVerifyingAccount(false);
     }
   };
+  const [withdrawPin, setWithdrawPin] = useState("");
+  const [showPinInput, setShowPinInput] = useState(false);
 
   const handleWithdraw = async () => {
-    if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
-      alert("Please fill all fields and verify account");
-      return;
+  if (!withdrawAmount || !accountName || !selectedBank || !accountNumber) {
+    alert("Please fill all fields and verify account");
+    return;
+  }
+  if (parseFloat(withdrawAmount) > walletBalance) {
+    alert("Insufficient balance");
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+
+  const pinRes = await fetch("/api/auth/pin", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ pin: withdrawPin }),
+  });
+  const pinData = await pinRes.json();
+
+  if (!pinData.success) {
+    alert(pinData.error || "Incorrect PIN");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/wallet/withdraw", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: withdrawAmount, accountNumber, bankCode: selectedBank, accountName }),
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert(`✅ ${data.message}`);
+      setShowWithdrawModal(false);
+      window.location.reload();
+    } else {
+      alert(data.error || "Withdrawal failed");
     }
-    if (parseFloat(withdrawAmount) > walletBalance) {
-      alert("Insufficient balance");
-      return;
-    }
-    const token = localStorage.getItem("token");
-    try {
-      const res = await fetch("/api/wallet/withdraw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ amount: withdrawAmount, accountNumber, bankCode: selectedBank, accountName }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        alert(`✅ ${data.message}`);
-        setShowWithdrawModal(false);
-        window.location.reload();
-      } else {
-        alert(data.error || "Withdrawal failed");
-      }
-    } catch {
-      alert("Something went wrong");
-    }
-  };
+  } catch {
+    alert("Something went wrong");
+  }
+};
 
   const handleFundWallet = async () => {
     const token = localStorage.getItem("token");
@@ -458,6 +474,17 @@ export default function WalletPage() {
                   <span className="text-sm font-medium text-emerald-700">{accountName}</span>
                 </div>
               )}
+              <div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">Transaction PIN</label>
+  <input type="password" value={withdrawPin}
+    onChange={(e) => setWithdrawPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+    placeholder="Enter 4-digit PIN" maxLength={4} inputMode="numeric"
+    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+  <p className="text-xs text-gray-400 mt-1 text-center">
+    Don&apos;t have a PIN? Set one in{" "}
+    <a href="/settings" className="text-emerald-500 hover:underline">Settings → Security</a>
+  </p>
+</div>
               <button onClick={handleWithdraw}
                 disabled={!accountName || !withdrawAmount}
                 className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors">

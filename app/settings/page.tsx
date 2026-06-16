@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import { ShieldCheck } from "lucide-react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
@@ -35,10 +36,16 @@ export default function SettingsPage() {
   const [profileForm, setProfileForm] = useState({ fullName: "", email: "", phone: "" });
   const [passwordForm, setPasswordForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [notifications, setNotifications] = useState({
+  const [pin, setPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [twoFAEnabled, setTwoFAEnabled] = useState(false);
+  const [pinSet, setPinSet] = useState(false);
     contributions: true, payouts: true, reminders: true, groupActivity: true, marketing: false,
   });
 
   useEffect(() => {
+    setTwoFAEnabled(data.user.twoFactorEnabled || false);
+    setPinSet(!!data.user.transactionPin);
     const token = localStorage.getItem("token");
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
@@ -279,10 +286,11 @@ export default function SettingsPage() {
           {/* Tabs */}
           <div className="flex gap-2 mb-6 flex-wrap">
             {[
-              { id: "profile", label: "Profile", icon: User },
-              { id: "password", label: "Password", icon: Lock },
-              { id: "verification", label: "Verification", icon: Shield },
-              { id: "notifications", label: "Notifications", icon: Bell },
+             { id: "profile", label: "Profile", icon: User },
+             { id: "password", label: "Password", icon: Lock },
+             { id: "verification", label: "Verification", icon: Shield },
+             { id: "security", label: "Security", icon: ShieldCheck },
+             { id: "notifications", label: "Notifications", icon: Bell },
             ].map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === tab.id ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
@@ -520,4 +528,117 @@ export default function SettingsPage() {
       </div>
     </div>
   );
+  {activeTab === "security" && (
+  <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+    className="space-y-6">
+
+    {/* 2FA */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="text-base font-semibold text-gray-900">Two-Factor Authentication</h2>
+        <button
+          onClick={async () => {
+            const token = localStorage.getItem("token");
+            try {
+              const res = await fetch("/api/auth/2fa", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ enabled: !twoFAEnabled }),
+              });
+              const data = await res.json();
+              if (data.success) {
+                setTwoFAEnabled(!twoFAEnabled);
+                showMsg(`2FA ${!twoFAEnabled ? "enabled" : "disabled"} successfully!`, "success");
+              }
+            } catch {
+              showMsg("Something went wrong", "error");
+            }
+          }}
+          className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${twoFAEnabled ? "bg-emerald-500" : "bg-gray-300"}`}>
+          <div className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${twoFAEnabled ? "translate-x-7" : "translate-x-1"}`} />
+        </button>
+      </div>
+      <p className="text-sm text-gray-500 mb-4">
+        {twoFAEnabled
+          ? "✅ 2FA is enabled. You'll receive a code by email every time you log in."
+          : "Enable 2FA to add an extra layer of security to your account."}
+      </p>
+      <div className={`p-3 rounded-xl text-xs font-medium ${twoFAEnabled ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>
+        {twoFAEnabled
+          ? "🔐 Your account is protected with two-factor authentication"
+          : "⚠️ Your account is not protected with 2FA. We recommend enabling it."}
+      </div>
+    </div>
+
+    {/* Transaction PIN */}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+      <h2 className="text-base font-semibold text-gray-900 mb-2">Transaction PIN</h2>
+      <p className="text-sm text-gray-500 mb-4">
+        {pinSet
+          ? "✅ Your transaction PIN is set. It will be required for all withdrawals."
+          : "Set a 4-digit PIN to confirm all withdrawals and sensitive transactions."}
+      </p>
+      <div className="space-y-3">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {pinSet ? "New PIN" : "Create PIN"} (4 digits)
+          </label>
+          <input type="password" value={pin} inputMode="numeric"
+            onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            placeholder="••••" maxLength={4}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Confirm PIN</label>
+          <input type="password" value={confirmPin} inputMode="numeric"
+            onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, "").slice(0, 4))}
+            placeholder="••••" maxLength={4}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-center text-2xl font-mono tracking-widest" />
+        </div>
+        {pin && confirmPin && pin !== confirmPin && (
+          <p className="text-xs text-red-500">PINs do not match</p>
+        )}
+        <button
+          onClick={async () => {
+            if (pin !== confirmPin) {
+              showMsg("PINs do not match", "error");
+              return;
+            }
+            if (pin.length !== 4) {
+              showMsg("PIN must be exactly 4 digits", "error");
+              return;
+            }
+            setLoading(true);
+            const token = localStorage.getItem("token");
+            try {
+              const res = await fetch("/api/auth/pin", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                body: JSON.stringify({ pin }),
+              });
+              const data = await res.json();
+              if (data.success) {
+                showMsg("Transaction PIN set successfully!", "success");
+                setPin("");
+                setConfirmPin("");
+                setPinSet(true);
+              } else {
+                showMsg(data.error || "Failed to set PIN", "error");
+              }
+            } catch {
+              showMsg("Something went wrong", "error");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          disabled={loading || pin.length !== 4 || pin !== confirmPin}
+          className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white py-3 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
+          {loading
+            ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            : <><ShieldCheck className="w-4 h-4" /> {pinSet ? "Update PIN" : "Set Transaction PIN"}</>}
+        </button>
+      </div>
+    </div>
+  </motion.div>
+)}
 }
