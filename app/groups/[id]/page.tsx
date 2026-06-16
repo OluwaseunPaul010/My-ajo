@@ -7,7 +7,7 @@ import {
   Home, Settings, LogOut, Menu, X, Target, Shield,
   ChevronLeft, Copy, Trash2, UserMinus, CheckCircle,
   Clock, Zap, Crown, MessageSquare, UserCheck, UserX,
-  ArrowUp, ArrowDown, Pin
+  ArrowUp, ArrowDown, Pin, Megaphone, Plus
 } from "lucide-react";
 
 const navItems = [
@@ -30,8 +30,12 @@ export default function GroupDetailPage() {
   const [group, setGroup] = useState<any>(null);
   const [joinRequests, setJoinRequests] = useState<any[]>([]);
   const [contributions, setContributions] = useState<any[]>([]);
+  const [announcements, setAnnouncements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("overview");
+  const [newAnnouncement, setNewAnnouncement] = useState("");
+  const [pinAnnouncement, setPinAnnouncement] = useState(false);
+  const [showAnnouncementForm, setShowAnnouncementForm] = useState(false);
 
   useEffect(() => {
     const stored = localStorage.getItem("user");
@@ -39,9 +43,7 @@ export default function GroupDetailPage() {
 
     const token = localStorage.getItem("token");
     if (token) {
-      fetch("/api/groups", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
         .then((data) => {
           if (data.success) {
@@ -60,36 +62,98 @@ export default function GroupDetailPage() {
           setLoading(false);
         });
 
-      fetch(`/api/transactions`, {
+      fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            setContributions(data.transactions.filter((t: any) => t.groupId === groupId));
+          }
+        });
+
+      fetch(`/api/announcements?groupId=${groupId}`, {
         headers: { Authorization: `Bearer ${token}` },
       })
         .then((res) => res.json())
         .then((data) => {
-          if (data.success) {
-            const groupTxns = data.transactions.filter((t: any) => t.groupId === groupId);
-            setContributions(groupTxns);
-          }
+          if (data.success) setAnnouncements(data.announcements);
         });
     }
   }, [groupId]);
 
   const isAdmin = group?.myRole === "admin";
 
+  const handlePostAnnouncement = async () => {
+    if (!newAnnouncement.trim()) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ groupId, message: newAnnouncement, isPinned: pinAnnouncement }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnnouncements([data.announcement, ...announcements]);
+        setNewAnnouncement("");
+        setPinAnnouncement(false);
+        setShowAnnouncementForm(false);
+      } else {
+        alert(data.error || "Failed to post announcement");
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
+
+  const handleTogglePin = async (announcementId: string, currentPin: boolean) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ announcementId, isPinned: !currentPin }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnnouncements(announcements.map((a) =>
+          a.id === announcementId ? { ...a, isPinned: !currentPin } : a
+        ));
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
+
+  const handleDeleteAnnouncement = async (announcementId: string) => {
+    if (!confirm("Delete this announcement?")) return;
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ announcementId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnnouncements(announcements.filter((a) => a.id !== announcementId));
+      }
+    } catch {
+      alert("Something went wrong");
+    }
+  };
+
   const handleApproveRequest = async (requestId: string, action: string, userName: string) => {
     const token = localStorage.getItem("token");
     try {
       const res = await fetch("/api/groups/request", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ requestId, action }),
       });
       const data = await res.json();
       if (data.success) {
         setJoinRequests(joinRequests.filter((r) => r.id !== requestId));
-        alert(`✅ ${userName} ${action === "approved" ? "approved" : "declined"} successfully!`);
+        alert(`✅ ${userName} ${action === "approved" ? "approved" : "declined"}!`);
         if (action === "approved") window.location.reload();
       }
     } catch {
@@ -103,21 +167,13 @@ export default function GroupDetailPage() {
     try {
       const res = await fetch("/api/groups/member", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ groupId, memberId }),
       });
       const data = await res.json();
       if (data.success) {
-        setGroup({
-          ...group,
-          members: group.members.filter((m: any) => m.userId !== memberId),
-        });
+        setGroup({ ...group, members: group.members.filter((m: any) => m.userId !== memberId) });
         alert(`✅ ${memberName} removed!`);
-      } else {
-        alert(data.error || "Failed to remove member");
       }
     } catch {
       alert("Something went wrong");
@@ -130,18 +186,13 @@ export default function GroupDetailPage() {
     try {
       const res = await fetch("/api/groups/delete", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ groupId }),
       });
       const data = await res.json();
       if (data.success) {
         alert("✅ Group deleted!");
         window.location.href = "/groups";
-      } else {
-        alert(data.error);
       }
     } catch {
       alert("Something went wrong");
@@ -154,10 +205,7 @@ export default function GroupDetailPage() {
     try {
       const res = await fetch("/api/contribute", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ groupId }),
       });
       const data = await res.json();
@@ -182,14 +230,10 @@ export default function GroupDetailPage() {
     }
     const updated = members.map((m: any, i: number) => ({ ...m, payoutOrder: i + 1 }));
     setGroup({ ...group, members: updated });
-
     const token = localStorage.getItem("token");
     await fetch("/api/groups/payout-order", {
       method: "PATCH",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ groupId, members: updated.map((m: any) => ({ userId: m.userId, payoutOrder: m.payoutOrder })) }),
     });
   };
@@ -213,11 +257,12 @@ export default function GroupDetailPage() {
     );
   }
 
-  const tabs = ["overview", "members", "payout", "contributions"];
-  if (isAdmin) tabs.splice(2, 0, "requests");
+  const tabs = ["overview", "announcements", "members", "payout", "contributions"];
+  if (isAdmin) tabs.splice(3, 0, "requests");
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -263,7 +308,9 @@ export default function GroupDetailPage() {
         </div>
       </aside>
 
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />
+      )}
 
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
@@ -284,15 +331,15 @@ export default function GroupDetailPage() {
             className="bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white mb-6 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-48 h-48 bg-white/5 rounded-full -translate-y-24 translate-x-24" />
             <div className="relative z-10">
-              <div className="flex items-start justify-between mb-4">
+              <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h1 className="text-2xl font-bold">{group.name}</h1>
+                    <h1 className="text-xl lg:text-2xl font-bold">{group.name}</h1>
                     {isAdmin && <Crown className="w-5 h-5 text-amber-300" />}
                   </div>
                   <p className="text-emerald-100 text-sm">{group.members?.length} members · {group.frequency} · ₦{group.contribution?.toLocaleString()}/cycle</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   {joinRequests.length > 0 && (
                     <span className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                       {joinRequests.length} pending
@@ -301,49 +348,42 @@ export default function GroupDetailPage() {
                   <span className="bg-white/20 text-white text-xs px-3 py-1 rounded-full font-medium">{group.status}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={handleContribute}
-                  className="bg-white text-emerald-600 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-2">
+                  className="bg-white text-emerald-600 px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-50 transition-colors flex items-center gap-1.5">
                   <CheckCircle className="w-4 h-4" /> Contribute ₦{group.contribution?.toLocaleString()}
                 </button>
                 <button
                   onClick={() => { navigator.clipboard.writeText(group.inviteCode); alert("✅ Invite code copied!"); }}
-                  className="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition-colors flex items-center gap-2">
+                  className="bg-white/20 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition-colors flex items-center gap-1.5">
                   <Copy className="w-4 h-4" /> {group.inviteCode}
                 </button>
                 <a href="/chat"
-                  className="bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition-colors flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" /> Group Chat
+                  className="bg-white/20 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-white/30 transition-colors flex items-center gap-1.5">
+                  <MessageSquare className="w-4 h-4" /> Chat
                 </a>
                 {isAdmin && (
-  <button
-    onClick={async () => {
-      if (!confirm(`Process payout of ₦${((group.contribution || 0) * (group.members?.length || 1)).toLocaleString()} to ${group.members?.[0]?.user?.fullName}?`)) return;
-      const token = localStorage.getItem("token");
-      try {
-        const res = await fetch("/api/payout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ groupId }),
-        });
-        const data = await res.json();
-        if (data.success) {
-          alert(`✅ ${data.message}`);
-          window.location.reload();
-        } else {
-          alert(data.error || "Payout failed");
-        }
-      } catch {
-        alert("Something went wrong");
-      }
-    }}
-    className="bg-amber-400 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
-    <Zap className="w-4 h-4" /> Process Payout
-  </button>
-)}
+                  <button
+                    onClick={async () => {
+                      if (!confirm(`Process payout to ${group.members?.[0]?.user?.fullName}?`)) return;
+                      const token = localStorage.getItem("token");
+                      const res = await fetch("/api/payout", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({ groupId }),
+                      });
+                      const data = await res.json();
+                      if (data.success) {
+                        alert(`✅ ${data.message}`);
+                        window.location.reload();
+                      } else {
+                        alert(data.error);
+                      }
+                    }}
+                    className="bg-amber-400 hover:bg-amber-500 text-white px-3 py-2 rounded-xl text-sm font-semibold transition-colors flex items-center gap-1.5">
+                    <Zap className="w-4 h-4" /> Process Payout
+                  </button>
+                )}
               </div>
             </div>
           </motion.div>
@@ -352,11 +392,16 @@ export default function GroupDetailPage() {
           <div className="flex gap-2 mb-6 flex-wrap">
             {tabs.map((tab) => (
               <button key={tab} onClick={() => setActiveTab(tab)}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize relative ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
-                {tab === "payout" ? "Payout Rotation" : tab === "requests" ? "Join Requests" : tab.charAt(0).toUpperCase() + tab.slice(1)}
+                className={`px-3 py-2 rounded-xl text-sm font-medium transition-colors capitalize relative ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
+                {tab === "payout" ? "Payout" : tab === "requests" ? "Requests" : tab === "contributions" ? "Contributions" : tab.charAt(0).toUpperCase() + tab.slice(1)}
                 {tab === "requests" && joinRequests.length > 0 && (
                   <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
                     {joinRequests.length}
+                  </span>
+                )}
+                {tab === "announcements" && announcements.filter((a) => a.isPinned).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-amber-500 rounded-full text-white text-xs flex items-center justify-center">
+                    📌
                   </span>
                 )}
               </button>
@@ -365,26 +410,155 @@ export default function GroupDetailPage() {
 
           {/* Overview Tab */}
           {activeTab === "overview" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {[
-                { label: "Total Members", value: group.members?.length || 0, icon: Users, color: "bg-emerald-100 text-emerald-500" },
-                { label: "Contribution", value: `₦${group.contribution?.toLocaleString()}`, icon: Wallet, color: "bg-blue-50 text-blue-500" },
-                { label: "Total Pot", value: `₦${((group.contribution || 0) * (group.members?.length || 1)).toLocaleString()}`, icon: TrendingUp, color: "bg-amber-50 text-amber-500" },
-              ].map((stat, i) => (
-                <motion.div key={i}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
-                    <stat.icon className="w-6 h-6" />
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {[
+                  { label: "Total Members", value: group.members?.length || 0, icon: Users, color: "bg-emerald-100 text-emerald-500" },
+                  { label: "Contribution", value: `₦${group.contribution?.toLocaleString()}`, icon: Wallet, color: "bg-blue-50 text-blue-500" },
+                  { label: "Total Pot", value: `₦${((group.contribution || 0) * (group.members?.length || 1)).toLocaleString()}`, icon: TrendingUp, color: "bg-amber-50 text-amber-500" },
+                ].map((stat, i) => (
+                  <motion.div key={i}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
+                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
+                      <stat.icon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="text-xs text-gray-400">{stat.label}</div>
+                      <div className="text-xl font-bold text-gray-900">{stat.value}</div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Pinned Announcements on Overview */}
+              {announcements.filter((a) => a.isPinned).length > 0 && (
+                <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Pin className="w-4 h-4 text-amber-500" />
+                    <h3 className="text-sm font-semibold text-amber-700">Pinned Announcements</h3>
                   </div>
-                  <div>
-                    <div className="text-xs text-gray-400">{stat.label}</div>
-                    <div className="text-xl font-bold text-gray-900">{stat.value}</div>
+                  <div className="space-y-2">
+                    {announcements.filter((a) => a.isPinned).map((ann: any, i: number) => (
+                      <div key={i} className="bg-white rounded-xl p-3">
+                        <p className="text-sm text-gray-700">{ann.message}</p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {ann.user?.fullName} · {new Date(ann.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short" })}
+                        </p>
+                      </div>
+                    ))}
                   </div>
-                </motion.div>
-              ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Announcements Tab */}
+          {activeTab === "announcements" && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+              <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-semibold text-gray-900">Group Announcements</h2>
+                  <p className="text-xs text-gray-400 mt-0.5">Important updates from group admin</p>
+                </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
+                    className="flex items-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors">
+                    <Plus className="w-4 h-4" /> Post
+                  </button>
+                )}
+              </div>
+
+              {/* Post Form */}
+              {isAdmin && showAnnouncementForm && (
+                <div className="p-6 border-b border-gray-100 bg-gray-50">
+                  <textarea
+                    value={newAnnouncement}
+                    onChange={(e) => setNewAnnouncement(e.target.value)}
+                    placeholder="Write your announcement here..."
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900 text-sm resize-none" />
+                  <div className="flex items-center justify-between mt-3">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="checkbox" checked={pinAnnouncement}
+                        onChange={(e) => setPinAnnouncement(e.target.checked)}
+                        className="w-4 h-4 accent-emerald-500" />
+                      <span className="text-sm text-gray-600 flex items-center gap-1">
+                        <Pin className="w-3.5 h-3.5 text-amber-500" /> Pin this announcement
+                      </span>
+                    </label>
+                    <div className="flex gap-2">
+                      <button onClick={() => { setShowAnnouncementForm(false); setNewAnnouncement(""); }}
+                        className="px-4 py-2 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-100 transition-colors">
+                        Cancel
+                      </button>
+                      <button onClick={handlePostAnnouncement}
+                        disabled={!newAnnouncement.trim()}
+                        className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white rounded-xl text-sm font-medium transition-colors flex items-center gap-2">
+                        <Megaphone className="w-4 h-4" /> Post Announcement
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="divide-y divide-gray-50">
+                {announcements.length === 0 ? (
+                  <div className="text-center py-12 text-gray-400">
+                    <Megaphone className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
+                    <p className="font-medium text-gray-500">No announcements yet</p>
+                    <p className="text-sm">{isAdmin ? "Post an announcement to notify all members" : "Admin hasn't posted any announcements yet"}</p>
+                  </div>
+                ) : (
+                  announcements.map((ann: any, i: number) => (
+                    <motion.div key={i}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`p-6 ${ann.isPinned ? "bg-amber-50/50" : ""}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-start gap-3 flex-1 min-w-0">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${ann.isPinned ? "bg-amber-100" : "bg-emerald-100"}`}>
+                            {ann.isPinned
+                              ? <Pin className="w-5 h-5 text-amber-500" />
+                              : <Megaphone className="w-5 h-5 text-emerald-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            {ann.isPinned && (
+                              <span className="text-xs bg-amber-100 text-amber-600 px-2 py-0.5 rounded-full font-medium mb-2 inline-block">
+                                📌 Pinned
+                              </span>
+                            )}
+                            <p className="text-sm text-gray-800 leading-relaxed">{ann.message}</p>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-xs text-gray-400">
+                                {ann.user?.fullName} · {new Date(ann.createdAt).toLocaleDateString("en-NG", { day: "numeric", month: "short", year: "numeric" })}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        {isAdmin && (
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              onClick={() => handleTogglePin(ann.id, ann.isPinned)}
+                              title={ann.isPinned ? "Unpin" : "Pin"}
+                              className={`p-1.5 rounded-lg transition-colors ${ann.isPinned ? "text-amber-500 bg-amber-50 hover:bg-amber-100" : "text-gray-400 hover:text-amber-500 hover:bg-amber-50"}`}>
+                              <Pin className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteAnnouncement(ann.id)}
+                              className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </div>
           )}
 
@@ -437,7 +611,7 @@ export default function GroupDetailPage() {
             </div>
           )}
 
-          {/* Join Requests Tab - Admin Only */}
+          {/* Join Requests Tab */}
           {activeTab === "requests" && isAdmin && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
               <div className="p-6 border-b border-gray-100">
@@ -484,13 +658,13 @@ export default function GroupDetailPage() {
             </div>
           )}
 
-          {/* Payout Rotation Tab */}
+          {/* Payout Tab */}
           {activeTab === "payout" && (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
               <div className="p-6 border-b border-gray-100">
                 <h2 className="text-base font-semibold text-gray-900">Payout Rotation</h2>
                 <p className="text-xs text-gray-400 mt-1">
-                  {isAdmin ? "Drag to reorder payout sequence" : "Members receive payout in this order"}
+                  {isAdmin ? "Use arrows to reorder payout sequence" : "Members receive payout in this order"}
                 </p>
               </div>
               <div className="divide-y divide-gray-50">

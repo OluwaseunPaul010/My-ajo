@@ -39,6 +39,7 @@ lockedUntil      DateTime?
 referralCode     String?  @unique
 referredBy       String?
 referralEarnings Float    @default(0)
+announcements Announcement[]
 }
 
 model Wallet {
@@ -67,6 +68,7 @@ model Group {
   messages        Message[]
   payoutSchedules PayoutSchedule[]
   joinRequests  JoinRequest[]
+  announcements Announcement[]
 }
 
 model GroupMember {
@@ -158,4 +160,16 @@ model JoinRequest {
   user      User     @relation(fields: [userId], references: [id])
 
   @@unique([groupId, userId])
+}
+
+model Announcement {
+  id        String   @id @default(cuid())
+  groupId   String
+  userId    String
+  message   String
+  isPinned  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  group     Group    @relation(fields: [groupId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 }
