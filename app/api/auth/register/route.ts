@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, generateToken } from "@/lib/auth";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email";
 
 function generateReferralCode(name: string) {
   const clean = name.replace(/\s/g, "").toUpperCase().slice(0, 4);
@@ -32,9 +30,7 @@ export async function POST(req: NextRequest) {
       const referrer = await prisma.user.findUnique({
         where: { referralCode },
       });
-      if (referrer) {
-        referredById = referrer.id;
-      }
+      if (referrer) referredById = referrer.id;
     }
 
     const hashedPassword = await hashPassword(password);
@@ -68,12 +64,10 @@ export async function POST(req: NextRequest) {
         where: { userId: referredById },
         data: { balance: { increment: 5000 } },
       });
-
       await prisma.user.update({
         where: { id: referredById },
         data: { referralEarnings: { increment: 5000 } },
       });
-
       await prisma.transaction.create({
         data: {
           userId: referredById,
@@ -83,7 +77,6 @@ export async function POST(req: NextRequest) {
           status: "completed",
         },
       });
-
       await prisma.notification.create({
         data: {
           userId: referredById,
@@ -95,23 +88,26 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      await resend.emails.send({
-        from: "My Ajo <onboarding@resend.dev>",
+      await sendEmail({
         to: email,
         subject: "Welcome to My Ajo - Verify Your Email",
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(135deg, #10b981, #059669); padding: 30px; border-radius: 16px 16px 0 0; text-align: center;">
               <h1 style="color: white; margin: 0;">Welcome to My Ajo! 🌿</h1>
+              <p style="color: #d1fae5; margin: 8px 0 0;">Save Together, Grow Together</p>
             </div>
             <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px;">
               <h2 style="color: #111827;">Hi ${fullName}!</h2>
-              <p style="color: #6b7280;">Your verification code is:</p>
+              <p style="color: #6b7280;">Your account has been created successfully. Use this code to verify your email:</p>
               <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 12px; padding: 24px; text-align: center; margin: 20px 0;">
-                <h1 style="color: #10b981; font-size: 48px; letter-spacing: 8px; margin: 0;">${verifyToken}</h1>
+                <p style="color: #6b7280; margin: 0 0 8px; font-size: 14px;">Verification Code</p>
+                <h1 style="color: #10b981; margin: 0; font-size: 48px; letter-spacing: 8px;">${verifyToken}</h1>
+                <p style="color: #9ca3af; margin: 8px 0 0; font-size: 12px;">Valid for 30 minutes</p>
               </div>
               <p style="color: #6b7280;">Your referral code: <strong style="color: #10b981;">${newReferralCode}</strong></p>
-              <p style="color: #6b7280;">Share it to earn ₦5,000 for each friend who joins!</p>
+              <p style="color: #6b7280;">Share it with friends to earn ₦5,000 for each person who joins!</p>
+              <p style="color: #9ca3af; font-size: 12px; margin-top: 24px;">© 2025 My Ajo. All rights reserved.</p>
             </div>
           </div>
         `,

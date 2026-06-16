@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { sendEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,12 +15,12 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.emailVerified) {
-  return NextResponse.json({ 
-    success: true,
-    alreadyVerified: true,
-    message: "Email is already verified" 
-  });
-}
+      return NextResponse.json({
+        success: true,
+        alreadyVerified: true,
+        message: "Email is already verified",
+      });
+    }
 
     const verifyToken = Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -31,8 +29,7 @@ export async function POST(req: NextRequest) {
       data: { emailVerifyToken: verifyToken },
     });
 
-    await resend.emails.send({
-      from: "My Ajo <onboarding@resend.dev>",
+    await sendEmail({
       to: user.email,
       subject: "Verify Your My Ajo Email Address",
       html: `
@@ -44,7 +41,7 @@ export async function POST(req: NextRequest) {
           <div style="background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 16px 16px;">
             <h2 style="color: #111827; margin: 0 0 16px;">Verify Your Email</h2>
             <p style="color: #6b7280; margin: 0 0 24px;">Hi ${user.fullName},</p>
-            <p style="color: #6b7280; margin: 0 0 24px;">Please use the code below to verify your email address:</p>
+            <p style="color: #6b7280; margin: 0 0 24px;">Use the code below to verify your email address and get +5 trust points!</p>
             <div style="background: #f0fdf4; border: 2px dashed #10b981; border-radius: 12px; padding: 24px; text-align: center; margin: 0 0 24px;">
               <p style="color: #6b7280; margin: 0 0 8px; font-size: 14px;">Verification Code</p>
               <h1 style="color: #10b981; margin: 0; font-size: 48px; letter-spacing: 8px; font-weight: bold;">${verifyToken}</h1>
