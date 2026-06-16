@@ -18,7 +18,6 @@ const navItems = [
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings", active: true },
-  { icon: Activity, label: "Activity Log", href: "/activity" },
 ];
 
 export default function SettingsPage() {
