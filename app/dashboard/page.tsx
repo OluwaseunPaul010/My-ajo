@@ -49,7 +49,10 @@ export default function DashboardPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
-    if (!token) return;
+if (!token) {
+  window.location.href = "/auth/login";
+  return;
+}
 
     Promise.all([
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
