@@ -34,10 +34,10 @@ export default function ChatPage() {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -69,7 +69,7 @@ export default function ChatPage() {
   };
 
   const fetchMessages = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token || !selectedGroup) return;
     try {
       const res = await fetch(`/api/messages?groupId=${selectedGroup.id}`, {
@@ -83,7 +83,7 @@ export default function ChatPage() {
   };
 
   const fetchPinnedAnnouncement = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token || !selectedGroup) return;
     try {
       const res = await fetch(`/api/announcements?groupId=${selectedGroup.id}`, {
@@ -108,7 +108,7 @@ export default function ChatPage() {
   const handleSend = async () => {
     if (!newMessage.trim() || !selectedGroup || sending) return;
     setSending(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/messages", {
         method: "POST",
@@ -162,8 +162,8 @@ export default function ChatPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}

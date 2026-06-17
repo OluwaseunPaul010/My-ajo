@@ -25,7 +25,7 @@ const handleSubmit = async (e: React.FormEvent) => {
     });
     const data = await res.json();
     if (data.success) {
-      localStorage.setItem("token", data.token);
+      sessionStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       document.cookie = `token=${data.token}; path=/; max-age=604800`;
       window.location.href = "/onboarding";

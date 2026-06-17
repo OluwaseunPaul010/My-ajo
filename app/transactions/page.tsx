@@ -30,10 +30,10 @@ export default function TransactionsPage() {
   const [totalOut, setTotalOut] = useState(0);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/transactions", {
         headers: { Authorization: `Bearer ${token}` },
@@ -100,8 +100,8 @@ export default function TransactionsPage() {
               </div>
               <button
   onClick={() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     window.location.href = "/auth/login";
   }}
   className="text-gray-400 hover:text-red-500 transition-colors">

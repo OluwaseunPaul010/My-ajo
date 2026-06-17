@@ -29,10 +29,10 @@ export default function ProfilePage() {
   const [totalIn, setTotalIn] = useState(0);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/user", {
         headers: { Authorization: `Bearer ${token}` },
@@ -97,8 +97,8 @@ export default function ProfilePage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
+                  sessionStorage.removeItem("token");
+                  sessionStorage.removeItem("user");
                   document.cookie = "token=; path=/; max-age=0";
                   window.location.href = "/auth/login";
                 }}

@@ -50,7 +50,7 @@ export default function SettingsPage() {
       document.documentElement.classList.add("dark");
     }
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -102,7 +102,7 @@ export default function SettingsPage() {
 
   const handleProfileUpdate = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/user/update", {
         method: "PATCH",
@@ -129,7 +129,7 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/user/password", {
         method: "PATCH",
@@ -185,7 +185,7 @@ export default function SettingsPage() {
         showMsg("Email verified! +5 trust points!", "success");
         setShowVerifyInput(false);
         setVerifyCode("");
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         if (token) refreshUser(token);
       } else {
         showMsg(data.error || "Invalid code", "error");
@@ -203,7 +203,7 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/auth/verify-bvn", {
         method: "POST",
@@ -235,7 +235,7 @@ export default function SettingsPage() {
       return;
     }
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/auth/pin", {
         method: "POST",
@@ -259,7 +259,7 @@ export default function SettingsPage() {
   };
 
   const handleToggle2FA = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/auth/2fa", {
         method: "PUT",
@@ -310,8 +310,8 @@ export default function SettingsPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}

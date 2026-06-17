@@ -45,10 +45,10 @@ export default function DashboardPage() {
       document.documentElement.classList.add("dark");
     }
 
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
 
     Promise.all([
@@ -174,8 +174,8 @@ export default function DashboardPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}

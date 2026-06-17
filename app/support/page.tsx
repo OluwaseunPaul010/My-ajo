@@ -39,7 +39,7 @@ export default function SupportPage() {
   const [submitted, setSubmitted] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
   }, []);
 
@@ -84,8 +84,8 @@ export default function SupportPage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
+                  sessionStorage.removeItem("token");
+                  sessionStorage.removeItem("user");
                   document.cookie = "token=; path=/; max-age=0";
                   window.location.href = "/auth/login";
                 }}

@@ -30,10 +30,10 @@ export default function GroupsPage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/groups", {
         headers: { Authorization: `Bearer ${token}` },
@@ -80,8 +80,8 @@ export default function GroupsPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}
@@ -232,7 +232,7 @@ export default function GroupsPage() {
                       <button
                         onClick={async (e) => {
                           e.stopPropagation();
-                          const token = localStorage.getItem("token");
+                          const token = sessionStorage.getItem("token");
                           if (!token) return;
                           if (!confirm(`Contribute ₦${group.contribution?.toLocaleString()} to ${group.name}?`)) return;
                           try {
@@ -335,7 +335,7 @@ export default function GroupsPage() {
               </div>
               <button
                 onClick={async () => {
-                  const token = localStorage.getItem("token");
+                  const token = sessionStorage.getItem("token");
                   if (!token) return;
                   try {
                     const res = await fetch("/api/groups", {
@@ -393,7 +393,7 @@ export default function GroupsPage() {
               </div>
               <button
                 onClick={async () => {
-                  const token = localStorage.getItem("token");
+                  const token = sessionStorage.getItem("token");
                   if (!token) return;
                   try {
                     const res = await fetch("/api/groups/request", {

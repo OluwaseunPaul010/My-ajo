@@ -39,14 +39,14 @@ export default function AdminPage() {
   const [currentAdmin, setCurrentAdmin] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setCurrentAdmin(JSON.parse(stored));
     fetchData();
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const [statsRes, usersRes, txRes, groupsRes] = await Promise.all([
         fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } }),
@@ -73,7 +73,7 @@ export default function AdminPage() {
   const handleViewActivity = async (user: any) => {
     setSelectedUser(user);
     setShowActivityModal(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch(`/api/admin/user-activity?userId=${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -88,7 +88,7 @@ export default function AdminPage() {
   const handleDeleteUser = async (userId: string, userName: string) => {
     if (!confirm(`Delete ${userName}'s account? This cannot be undone.`)) return;
     if (!confirm("All their data including wallet, transactions and goals will be permanently deleted. Continue?")) return;
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/admin/delete-user", {
         method: "DELETE",
@@ -109,7 +109,7 @@ export default function AdminPage() {
 
   const handleDeleteGroup = async (groupId: string, groupName: string) => {
     if (!confirm(`Delete group "${groupName}"? This cannot be undone.`)) return;
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/admin/groups", {
         method: "DELETE",
@@ -179,8 +179,8 @@ export default function AdminPage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
+                  sessionStorage.removeItem("token");
+                  sessionStorage.removeItem("user");
                   window.location.href = "/auth/login";
                 }}
                 className="text-gray-400 hover:text-red-400 transition-colors">

@@ -38,16 +38,16 @@ export default function LoginPage() {
       const twoFAData = await twoFARes.json();
 
       if (twoFAData.required) {
-        localStorage.setItem("temp_token", data.token);
-        localStorage.setItem("temp_user", JSON.stringify(data.user));
+        sessionStorage.setItem("temp_token", data.token);
+        sessionStorage.setItem("temp_user", JSON.stringify(data.user));
         setStep("2fa");
         setLoading(false);
         return;
       }
 
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      document.cookie = `token=${data.token}; path=/; max-age=86400`;
+      sessionStorage.setItem("token", data.token);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+      document.cookie = `token=${data.token}; path=/`;
 
       const onboarding = localStorage.getItem("onboarding_complete");
       window.location.href = onboarding ? "/dashboard" : "/onboarding";
@@ -75,14 +75,14 @@ export default function LoginPage() {
         return;
       }
 
-      const token = localStorage.getItem("temp_token");
-      const user = localStorage.getItem("temp_user");
+      const token = sessionStorage.getItem("temp_token");
+const user = sessionStorage.getItem("temp_user");
 
-      localStorage.removeItem("temp_token");
-      localStorage.removeItem("temp_user");
-      localStorage.setItem("token", token || "");
-      localStorage.setItem("user", user || "");
-      document.cookie = `token=${token}; path=/; max-age=86400`;
+sessionStorage.removeItem("temp_token");
+sessionStorage.removeItem("temp_user");
+sessionStorage.setItem("token", token || "");
+sessionStorage.setItem("user", user || "");
+document.cookie = `token=${token}; path=/`;
 
       window.location.href = "/dashboard";
     } catch {

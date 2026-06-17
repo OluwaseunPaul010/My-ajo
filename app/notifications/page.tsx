@@ -42,10 +42,10 @@ export default function NotificationsPage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/notifications", {
         headers: { Authorization: `Bearer ${token}` },
@@ -61,7 +61,7 @@ export default function NotificationsPage() {
   }, []);
 
   const markAllRead = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token) return;
     await fetch("/api/notifications", {
       method: "PATCH",
@@ -106,8 +106,8 @@ export default function NotificationsPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}

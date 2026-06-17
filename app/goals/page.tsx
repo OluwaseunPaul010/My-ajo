@@ -28,10 +28,10 @@ export default function GoalsPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/goals", {
         headers: { Authorization: `Bearer ${token}` },
@@ -44,7 +44,7 @@ export default function GoalsPage() {
   }, []);
 
   const createGoal = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token || !form.title || !form.targetAmount) return;
     setLoading(true);
     try {
@@ -109,8 +109,8 @@ export default function GoalsPage() {
               </div>
               <button
                 onClick={() => {
-                  localStorage.removeItem("token");
-                  localStorage.removeItem("user");
+                  sessionStorage.removeItem("token");
+                  sessionStorage.removeItem("user");
                   document.cookie = "token=; path=/; max-age=0";
                   window.location.href = "/auth/login";
                 }}
@@ -247,7 +247,7 @@ export default function GoalsPage() {
     <button
       onClick={async () => {
         if (!confirm(`Withdraw ₦${goal.savedAmount.toLocaleString()} to your wallet?`)) return;
-        const token = localStorage.getItem("token");
+        const token = sessionStorage.getItem("token");
         try {
           const res = await fetch("/api/goals/withdraw", {
             method: "POST",
@@ -282,7 +282,7 @@ export default function GoalsPage() {
     onClick={async () => {
       const amount = prompt("Enter amount to save towards this goal (₦):");
       if (!amount || isNaN(parseFloat(amount))) return;
-      const token = localStorage.getItem("token");
+      const token = sessionStorage.getItem("token");
       try {
         const res = await fetch("/api/goals", {
           method: "PATCH",

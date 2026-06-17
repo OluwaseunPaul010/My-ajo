@@ -40,10 +40,10 @@ export default function WalletPage() {
   const [withdrawPin, setWithdrawPin] = useState("");
 
   useEffect(() => {
-    const stored = localStorage.getItem("user");
+    const stored = sessionStorage.getItem("user");
     if (stored) setUser(JSON.parse(stored));
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -97,7 +97,7 @@ export default function WalletPage() {
       return;
     }
     setVerifyingAccount(true);
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     try {
       const res = await fetch("/api/wallet/banks", {
         method: "POST",
@@ -131,7 +131,7 @@ export default function WalletPage() {
       return;
     }
 
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
 
     try {
       const pinRes = await fetch("/api/auth/pin", {
@@ -164,7 +164,7 @@ export default function WalletPage() {
   };
 
   const handleFundWallet = async () => {
-    const token = localStorage.getItem("token");
+    const token = sessionStorage.getItem("token");
     if (!token || !amount) return;
     try {
       const res = await fetch("/api/payment/initialize", {
@@ -217,8 +217,8 @@ export default function WalletPage() {
             </a>
             <button
               onClick={() => {
-                localStorage.removeItem("token");
-                localStorage.removeItem("user");
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
                 document.cookie = "token=; path=/; max-age=0";
                 window.location.href = "/auth/login";
               }}

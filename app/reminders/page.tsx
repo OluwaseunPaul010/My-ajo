@@ -28,7 +28,7 @@ export default function RemindersPage() {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-  const stored = localStorage.getItem("user");
+  const stored = sessionStorage.getItem("user");
   if (stored) setUser(JSON.parse(stored));
 }, []);
 
@@ -89,8 +89,8 @@ export default function RemindersPage() {
               </div>
              <button
   onClick={() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
     document.cookie = "token=; path=/; max-age=0";
     window.location.href = "/auth/login";
   }}
