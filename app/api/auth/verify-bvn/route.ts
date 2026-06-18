@@ -36,13 +36,16 @@ export async function POST(req: NextRequest) {
     const isDemoMode = true;
 
     if (isDemoMode) {
-      await prisma.user.update({
-        where: { id: decoded.userId },
-        data: {
-          bvnVerified: true,
-          trustScore: Math.min(100, (user.trustScore || 100) + 10),
-        },
-      });
+      const emailAlreadyVerified = user.emailVerified;
+
+await prisma.user.update({
+  where: { id: decoded.userId },
+  data: {
+    bvnVerified: true,
+    trustScore: Math.min(100, (user.trustScore || 100) + 10),
+    isVerified: emailAlreadyVerified ? true : false,
+  },
+});
 
       await prisma.notification.create({
         data: {
@@ -71,6 +74,7 @@ export async function POST(req: NextRequest) {
       data: {
         bvnVerified: true,
         trustScore: Math.min(100, (user.trustScore || 100) + 10),
+        isVerified: user.emailVerified ? true : false,
       },
     });
 

@@ -14,7 +14,7 @@ const navItems = [
   { icon: Users, label: "My Groups", href: "/groups" },
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
-  { icon: Bell, label: "Reminders", href: "/reminders" },
+  { icon: Bell, label: "Notifications", href: "/notifications" },
   { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },
@@ -246,7 +246,7 @@ if (!token) {
           <button onClick={toggleDarkMode} className="p-2 text-gray-500 hover:text-emerald-500 transition-colors flex-shrink-0">
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
-          <a href="/reminders" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors flex-shrink-0">
+          <a href="/notifications" className="relative p-2 text-gray-500 hover:text-emerald-500 transition-colors flex-shrink-0">
             <Bell className="w-5 h-5" />
             {unreadCount > 0 && (
               <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">

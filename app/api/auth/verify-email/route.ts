@@ -76,14 +76,17 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Invalid verification code" }, { status: 400 });
     }
 
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        emailVerified: true,
-        emailVerifyToken: null,
-        trustScore: Math.min(100, (user.trustScore || 100) + 5),
-      },
-    });
+    const bvnAlreadyVerified = user.bvnVerified;
+
+await prisma.user.update({
+  where: { id: userId },
+  data: {
+    emailVerified: true,
+    emailVerifyToken: null,
+    trustScore: Math.min(100, (user.trustScore || 100) + 5),
+    isVerified: bvnAlreadyVerified ? true : false,
+  },
+});
 
     await prisma.notification.create({
       data: {

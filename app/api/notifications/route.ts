@@ -13,12 +13,10 @@ export async function GET(req: NextRequest) {
     const notifications = await prisma.notification.findMany({
       where: { userId: decoded.userId },
       orderBy: { createdAt: "desc" },
-      take: 20,
+      take: 50,
     });
 
-    const unreadCount = await prisma.notification.count({
-      where: { userId: decoded.userId, read: false },
-    });
+    const unreadCount = notifications.filter((n) => !n.read).length;
 
     return NextResponse.json({ success: true, notifications, unreadCount });
   } catch (error) {
