@@ -209,13 +209,20 @@ if (!token) {
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
             <Menu className="w-6 h-6 text-gray-600" />
           </button>
-          <div className="hidden sm:block">
-            <h1 className="text-lg font-bold text-gray-900">Welcome back, {user?.fullName?.split(" ")[0] || "there"} 👋</h1>
-            <p className="text-sm text-gray-500">Here&apos;s what&apos;s happening with your savings</p>
-          </div>
+         <div className="flex-1 min-w-0">
+  <h1 className="text-base sm:text-lg font-bold text-gray-900 truncate">
+    Welcome back, {user?.fullName?.split(" ")[0] || "there"} 👋
+  </h1>
+  <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+    Here&apos;s what&apos;s happening with your savings
+  </p>
+  <p className="text-xs text-emerald-500 font-medium sm:hidden">
+    ₦{walletBalance.toLocaleString()} available
+  </p>
+</div>
 
           {/* Search */}
-          <div className="relative flex-1 max-w-sm ml-auto">
+          <div className="relative hidden sm:block flex-1 max-w-sm ml-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
