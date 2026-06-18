@@ -34,6 +34,7 @@ export default function TransactionsPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/transactions", {
         headers: { Authorization: `Bearer ${token}` },

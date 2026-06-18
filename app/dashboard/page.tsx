@@ -49,6 +49,7 @@ export default function DashboardPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
 if (!token) {
   window.location.href = "/auth/login";
   return;

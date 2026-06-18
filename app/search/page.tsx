@@ -33,6 +33,7 @@ export default function SearchPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())

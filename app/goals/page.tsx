@@ -32,6 +32,7 @@ export default function GoalsPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/goals", {
         headers: { Authorization: `Bearer ${token}` },
@@ -45,6 +46,7 @@ export default function GoalsPage() {
 
   const createGoal = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (!token || !form.title || !form.targetAmount) return;
     setLoading(true);
     try {
@@ -248,6 +250,7 @@ export default function GoalsPage() {
       onClick={async () => {
         if (!confirm(`Withdraw ₦${goal.savedAmount.toLocaleString()} to your wallet?`)) return;
         const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
         try {
           const res = await fetch("/api/goals/withdraw", {
             method: "POST",
@@ -283,6 +286,7 @@ export default function GoalsPage() {
       const amount = prompt("Enter amount to save towards this goal (₦):");
       if (!amount || isNaN(parseFloat(amount))) return;
       const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
       try {
         const res = await fetch("/api/goals", {
           method: "PATCH",

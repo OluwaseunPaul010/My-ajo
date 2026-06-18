@@ -38,6 +38,7 @@ export default function ChatPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -70,6 +71,7 @@ export default function ChatPage() {
 
   const fetchMessages = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (!token || !selectedGroup) return;
     try {
       const res = await fetch(`/api/messages?groupId=${selectedGroup.id}`, {
@@ -84,6 +86,7 @@ export default function ChatPage() {
 
   const fetchPinnedAnnouncement = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (!token || !selectedGroup) return;
     try {
       const res = await fetch(`/api/announcements?groupId=${selectedGroup.id}`, {
@@ -109,6 +112,7 @@ export default function ChatPage() {
     if (!newMessage.trim() || !selectedGroup || sending) return;
     setSending(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/messages", {
         method: "POST",

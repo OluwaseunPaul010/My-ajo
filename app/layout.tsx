@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "My Ajo - Save Together, Grow Together",
@@ -36,6 +37,24 @@ export default function RootLayout({
       </head>
       <body className="font-sans antialiased">
         {children}
+        <Script id="tawk-to" strategy="afterInteractive">
+  {`
+    var Tawk_API = Tawk_API || {};
+    Tawk_API.onLoad = function () {
+      Tawk_API.hideWidget();
+    };
+    var Tawk_LoadStart = new Date();
+    (function () {
+      var s1 = document.createElement("script"),
+        s0 = document.getElementsByTagName("script")[0];
+      s1.async = true;
+      s1.src = 'https://embed.tawk.to/6a330a79b319cc1d4d432ae1/1jrbm1r7d';
+      s1.charset = "UTF-8";
+      s1.setAttribute("crossorigin", "*");
+      s0.parentNode.insertBefore(s1, s0);
+    })();
+  `}
+</Script>
       </body>
     </html>
   );

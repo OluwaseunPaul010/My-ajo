@@ -46,6 +46,7 @@ export default function NotificationsPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/notifications", {
         headers: { Authorization: `Bearer ${token}` },
@@ -62,6 +63,7 @@ export default function NotificationsPage() {
 
   const markAllRead = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (!token) return;
     await fetch("/api/notifications", {
       method: "PATCH",

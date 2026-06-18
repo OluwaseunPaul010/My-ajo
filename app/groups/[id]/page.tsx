@@ -42,6 +42,7 @@ export default function GroupDetailPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -85,6 +86,7 @@ export default function GroupDetailPage() {
   const handlePostAnnouncement = async () => {
     if (!newAnnouncement.trim()) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/announcements", {
         method: "POST",
@@ -107,6 +109,7 @@ export default function GroupDetailPage() {
 
   const handleTogglePin = async (announcementId: string, currentPin: boolean) => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/announcements", {
         method: "PATCH",
@@ -127,6 +130,7 @@ export default function GroupDetailPage() {
   const handleDeleteAnnouncement = async (announcementId: string) => {
     if (!confirm("Delete this announcement?")) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/announcements", {
         method: "DELETE",
@@ -144,6 +148,7 @@ export default function GroupDetailPage() {
 
   const handleApproveRequest = async (requestId: string, action: string, userName: string) => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/groups/request", {
         method: "PATCH",
@@ -164,6 +169,7 @@ export default function GroupDetailPage() {
   const handleRemoveMember = async (memberId: string, memberName: string) => {
     if (!confirm(`Remove ${memberName} from this group?`)) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/groups/member", {
         method: "DELETE",
@@ -183,6 +189,7 @@ export default function GroupDetailPage() {
   const handleDeleteGroup = async () => {
     if (!confirm(`Delete "${group?.name}"? This cannot be undone.`)) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/groups/delete", {
         method: "DELETE",
@@ -202,6 +209,7 @@ export default function GroupDetailPage() {
   const handleContribute = async () => {
     if (!confirm(`Contribute ₦${group?.contribution?.toLocaleString()} to ${group?.name}?`)) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/contribute", {
         method: "POST",
@@ -231,6 +239,7 @@ export default function GroupDetailPage() {
     const updated = members.map((m: any, i: number) => ({ ...m, payoutOrder: i + 1 }));
     setGroup({ ...group, members: updated });
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     await fetch("/api/groups/payout-order", {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -367,6 +376,7 @@ export default function GroupDetailPage() {
                     onClick={async () => {
                       if (!confirm(`Process payout to ${group.members?.[0]?.user?.fullName}?`)) return;
                       const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
                       const res = await fetch("/api/payout", {
                         method: "POST",
                         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

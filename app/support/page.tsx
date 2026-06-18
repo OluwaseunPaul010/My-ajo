@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
+import {  Send, Bot, User as UserIcon } from "lucide-react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
@@ -37,6 +38,13 @@ export default function SupportPage() {
   const [activeTab, setActiveTab] = useState("faq");
   const [contactForm, setContactForm] = useState({ subject: "", message: "" });
   const [submitted, setSubmitted] = useState(false);
+  const [showChatBot, setShowChatBot] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{ sender: "bot" | "user"; text: string }[]>([
+  { sender: "bot", text: "Hi! 👋 I'm the My Ajo support bot. Ask me anything about contributions, withdrawals, payouts, or your account!" }
+]);
+  const [chatInput, setChatInput] = useState("");
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [showHandoff, setShowHandoff] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("user");
@@ -49,6 +57,70 @@ export default function SupportPage() {
     setTimeout(() => setSubmitted(false), 3000);
     setContactForm({ subject: "", message: "" });
   };
+
+  const findFaqAnswer = (userQuestion: string) => {
+  const lower = userQuestion.toLowerCase();
+  let bestMatch: any = null;
+  let bestScore = 0;
+
+  faqs.forEach((faq) => {
+    const faqWords = faq.question.toLowerCase().split(" ").filter((w) => w.length > 3);
+    const userWords = lower.split(" ").filter((w) => w.length > 3);
+    let score = 0;
+    faqWords.forEach((word) => {
+      if (lower.includes(word)) score++;
+    });
+    userWords.forEach((word) => {
+      if (faq.question.toLowerCase().includes(word)) score++;
+      if (faq.answer.toLowerCase().includes(word)) score += 0.5;
+    });
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = faq;
+    }
+  });
+
+  return bestScore >= 1.5 ? bestMatch : null;
+};
+
+const handleSendChat = () => {
+  if (!chatInput.trim()) return;
+
+  const userMsg = chatInput;
+  setChatMessages((prev) => [...prev, { sender: "user", text: userMsg }]);
+  setChatInput("");
+
+  setTimeout(() => {
+    const match = findFaqAnswer(userMsg);
+
+    if (match) {
+      setChatMessages((prev) => [...prev, { sender: "bot", text: match.answer }]);
+      setFailedAttempts(0);
+    } else {
+      const newFailCount = failedAttempts + 1;
+      setFailedAttempts(newFailCount);
+
+      if (newFailCount >= 2) {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "I'm sorry, I couldn't find a good answer for that. 😔 Would you like to talk to a real support person instead?",
+          },
+        ]);
+        setShowHandoff(true);
+      } else {
+        setChatMessages((prev) => [
+          ...prev,
+          {
+            sender: "bot",
+            text: "Hmm, I couldn't quite find that in our FAQs. Could you try rephrasing your question? Or ask about contributions, withdrawals, payouts, groups, or verification.",
+          },
+        ]);
+      }
+    }
+  }, 600);
+};
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -220,6 +292,79 @@ export default function SupportPage() {
           )}
         </main>
       </div>
+      {showChatBot && (
+  <div className="fixed bottom-4 right-4 z-50 w-full max-w-sm">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col h-[500px]">
+      {/* Header */}
+      <div className="bg-emerald-500 px-4 py-3 flex items-center gap-3 flex-shrink-0">
+        <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
+          <Bot className="w-5 h-5 text-white" />
+        </div>
+        <div className="flex-1">
+          <div className="text-sm font-bold text-white">My Ajo Support Bot</div>
+          <div className="text-xs text-emerald-100 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 bg-emerald-300 rounded-full" /> Online
+          </div>
+        </div>
+        <button onClick={() => setShowChatBot(false)} className="text-white">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
+        {chatMessages.map((msg, i) => (
+          <div key={i} className={`flex items-end gap-2 ${msg.sender === "user" ? "flex-row-reverse" : "flex-row"}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${msg.sender === "bot" ? "bg-emerald-100" : "bg-gray-200"}`}>
+              {msg.sender === "bot" ? <Bot className="w-4 h-4 text-emerald-600" /> : <UserIcon className="w-4 h-4 text-gray-500" />}
+            </div>
+            <div className={`max-w-[75%] px-4 py-2.5 rounded-2xl text-sm ${msg.sender === "user" ? "bg-emerald-500 text-white rounded-br-sm" : "bg-white text-gray-800 border border-gray-100 rounded-bl-sm shadow-sm"}`}>
+              {msg.text}
+            </div>
+          </div>
+        ))}
+
+        {showHandoff && (
+          <div className="flex justify-center pt-2">
+            <button
+              onClick={() => {
+  if (typeof window !== "undefined" && (window as any).Tawk_API) {
+    (window as any).Tawk_API.showWidget();
+    (window as any).Tawk_API.maximize();
+    setShowChatBot(false);
+  } else {
+    alert("Live chat connecting... please wait a moment and try again.");
+  }
+  setShowHandoff(false);
+}}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+              👤 Talk to a Real Person
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Input */}
+      <div className="border-t border-gray-100 p-3 flex items-center gap-2 flex-shrink-0">
+        <input
+          type="text"
+          value={chatInput}
+          onChange={(e) => setChatInput(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSendChat()}
+          placeholder="Type your question..."
+          className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 text-gray-900"
+        />
+        <button onClick={handleSendChat}
+          className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl flex items-center justify-center transition-colors flex-shrink-0">
+          <Send className="w-4 h-4" />
+        </button>
+      </div>
+    </motion.div>
+  </div>
+)}
     </div>
   );
 }

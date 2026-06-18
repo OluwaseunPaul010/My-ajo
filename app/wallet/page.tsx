@@ -44,6 +44,7 @@ export default function WalletPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -98,6 +99,7 @@ export default function WalletPage() {
     }
     setVerifyingAccount(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/wallet/banks", {
         method: "POST",
@@ -132,6 +134,7 @@ export default function WalletPage() {
     }
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
 
     try {
       const pinRes = await fetch("/api/auth/pin", {
@@ -165,6 +168,7 @@ export default function WalletPage() {
 
   const handleFundWallet = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (!token || !amount) return;
     try {
       const res = await fetch("/api/payment/initialize", {

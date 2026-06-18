@@ -39,6 +39,7 @@ export default function AnalyticsPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())

@@ -30,6 +30,7 @@ export default function ReferralPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/referral", {
         headers: { Authorization: `Bearer ${token}` },

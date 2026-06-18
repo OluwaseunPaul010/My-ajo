@@ -34,6 +34,7 @@ export default function GroupsPage() {
     if (stored) setUser(JSON.parse(stored));
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/groups", {
         headers: { Authorization: `Bearer ${token}` },
@@ -233,6 +234,7 @@ export default function GroupsPage() {
                         onClick={async (e) => {
                           e.stopPropagation();
                           const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
                           if (!token) return;
                           if (!confirm(`Contribute ₦${group.contribution?.toLocaleString()} to ${group.name}?`)) return;
                           try {
@@ -336,6 +338,7 @@ export default function GroupsPage() {
               <button
                 onClick={async () => {
                   const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
                   if (!token) return;
                   try {
                     const res = await fetch("/api/groups", {
@@ -394,6 +397,7 @@ export default function GroupsPage() {
               <button
                 onClick={async () => {
                   const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
                   if (!token) return;
                   try {
                     const res = await fetch("/api/groups/request", {

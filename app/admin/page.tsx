@@ -47,6 +47,7 @@ export default function AdminPage() {
   const fetchData = async () => {
     setLoading(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const [statsRes, usersRes, txRes, groupsRes] = await Promise.all([
         fetch("/api/admin/stats", { headers: { Authorization: `Bearer ${token}` } }),
@@ -74,6 +75,7 @@ export default function AdminPage() {
     setSelectedUser(user);
     setShowActivityModal(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch(`/api/admin/user-activity?userId=${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -89,6 +91,7 @@ export default function AdminPage() {
     if (!confirm(`Delete ${userName}'s account? This cannot be undone.`)) return;
     if (!confirm("All their data including wallet, transactions and goals will be permanently deleted. Continue?")) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/admin/delete-user", {
         method: "DELETE",
@@ -110,6 +113,7 @@ export default function AdminPage() {
   const handleDeleteGroup = async (groupId: string, groupName: string) => {
     if (!confirm(`Delete group "${groupName}"? This cannot be undone.`)) return;
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/admin/groups", {
         method: "DELETE",

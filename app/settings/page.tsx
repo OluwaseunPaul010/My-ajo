@@ -51,6 +51,7 @@ export default function SettingsPage() {
     }
 
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
         .then((res) => res.json())
@@ -103,6 +104,7 @@ export default function SettingsPage() {
   const handleProfileUpdate = async () => {
     setLoading(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/user/update", {
         method: "PATCH",
@@ -130,6 +132,7 @@ export default function SettingsPage() {
     }
     setLoading(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/user/password", {
         method: "PATCH",
@@ -186,6 +189,7 @@ export default function SettingsPage() {
         setShowVerifyInput(false);
         setVerifyCode("");
         const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
         if (token) refreshUser(token);
       } else {
         showMsg(data.error || "Invalid code", "error");
@@ -204,6 +208,7 @@ export default function SettingsPage() {
     }
     setLoading(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/auth/verify-bvn", {
         method: "POST",
@@ -236,6 +241,7 @@ export default function SettingsPage() {
     }
     setLoading(true);
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/auth/pin", {
         method: "POST",
@@ -260,6 +266,7 @@ export default function SettingsPage() {
 
   const handleToggle2FA = async () => {
     const token = sessionStorage.getItem("token");
+    if (!token) { window.location.href = "/auth/login"; return; }
     try {
       const res = await fetch("/api/auth/2fa", {
         method: "PUT",
