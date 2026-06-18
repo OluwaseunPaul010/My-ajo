@@ -14,7 +14,7 @@ const navItems = [
   { icon: Users, label: "My Groups", href: "/groups" },
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions" },
-  { icon: Bell, label: "Notifications", href: "/notifications" },
+  { icon: BellRing, label: "Notifications", href: "/notifications" },
   { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
   { icon: BarChart3, label: "Analytics", href: "/analytics" },

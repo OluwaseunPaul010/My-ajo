@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
+import FloatingChat from "@/components/FloatingChat";
 
 export const metadata: Metadata = {
   title: "My Ajo - Save Together, Grow Together",
@@ -55,6 +56,13 @@ export default function RootLayout({
     })();
   `}
 </Script>
+<body>
+  {children}
+  <FloatingChat />
+  <Script id="tawk-to" strategy="afterInteractive">
+    {`...`}
+  </Script>
+</body>
       </body>
     </html>
   );
