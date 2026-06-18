@@ -112,9 +112,15 @@ if (!token) {
   const activeGroupsCount = groups.filter((g: any) => g.status === "active").length;
 
   // Contribution overview
-  const totalExpectedContributions = groups.reduce((sum: number, g: any) => sum + (g.members?.length || 0), 0) || 1;
-  const paidContributions = transactions.filter((t: any) => t.type === "debit" && t.groupId && t.status === "completed").length;
-  const pendingContributions = Math.max(totalExpectedContributions - paidContributions, 0);
+  const totalExpectedContributions = groups.length > 0
+  ? groups.reduce((sum: number, g: any) => sum + (g.members?.length || 0), 0)
+  : 0;
+const paidContributions = groups.length > 0
+  ? transactions.filter((t: any) => t.type === "debit" && t.groupId && t.status === "completed").length
+  : 0;
+const pendingContributions = groups.length > 0
+  ? Math.max(totalExpectedContributions - paidContributions, 0)
+  : 0;
   const missedContributions = 0;
   const completionPercent = Math.min(Math.round((paidContributions / totalExpectedContributions) * 100), 100);
   const circumference = 2 * Math.PI * 54;
@@ -216,9 +222,9 @@ if (!token) {
   <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
     Here&apos;s what&apos;s happening with your savings
   </p>
-  <p className="text-xs text-emerald-500 font-medium sm:hidden">
-    ₦{walletBalance.toLocaleString()} available
-  </p>
+  <p className="text-xs text-gray-500 sm:hidden">
+  Here&apos;s what&apos;s happening today
+</p>
 </div>
 
           {/* Search */}

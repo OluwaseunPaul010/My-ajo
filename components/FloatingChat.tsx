@@ -148,19 +148,27 @@ export default function FloatingChat() {
   return (
     <>
       {/* Floating Ball */}
-      <div
-        ref={dragRef}
-        onMouseDown={handleMouseDown}
-        onTouchStart={handleTouchStart}
-        onClick={() => { if (!hasMoved) setIsOpen(!isOpen); }}
-        style={{
-          position: "fixed",
-          bottom: `${16 - position.y}px`,
-          right: `${16 - position.x}px`,
-          cursor: isDragging ? "grabbing" : "grab",
-          zIndex: 9999,
-          userSelect: "none",
-        }}>
+     <div
+  ref={dragRef}
+  onMouseDown={handleMouseDown}
+  onTouchStart={handleTouchStart}
+  onTouchEnd={(e) => {
+    if (!hasMoved) {
+      e.preventDefault();
+      setIsOpen(!isOpen);
+    }
+    setIsDragging(false);
+  }}
+  onClick={() => { if (!hasMoved) setIsOpen(!isOpen); }}
+  style={{
+    position: "fixed",
+    bottom: `${16 - position.y}px`,
+    right: `${16 - position.x}px`,
+    cursor: isDragging ? "grabbing" : "grab",
+    zIndex: 9999,
+    userSelect: "none",
+    touchAction: "none",
+  }}>
         <motion.div
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.95 }}
@@ -189,13 +197,20 @@ export default function FloatingChat() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            style={{ position: "fixed", bottom: "88px", right: "16px", zIndex: 9998 }}
-            className="w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col"
-            style={{ height: "460px" }}>
-
+  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+  animate={{ opacity: 1, y: 0, scale: 1 }}
+  exit={{ opacity: 0, y: 20, scale: 0.95 }}
+  style={{
+    position: "fixed",
+    bottom: "88px",
+    right: "8px",
+    left: "8px",
+    zIndex: 9998,
+    height: "460px",
+    maxWidth: "420px",
+    marginLeft: "auto",
+  }}
+  className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col">
             {/* Header */}
             <div className="bg-emerald-500 px-4 py-3 flex items-center gap-3 flex-shrink-0">
               <div className="w-9 h-9 bg-white/20 rounded-full flex items-center justify-center">
