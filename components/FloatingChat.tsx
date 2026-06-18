@@ -194,7 +194,7 @@ export default function FloatingChat() {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             style={{ position: "fixed", bottom: "88px", right: "16px", zIndex: 9998 }}
             className="w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden flex flex-col"
-            css={{ height: "460px" }}>
+            style={{ height: "460px" }}>
 
             {/* Header */}
             <div className="bg-emerald-500 px-4 py-3 flex items-center gap-3 flex-shrink-0">
