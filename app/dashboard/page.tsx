@@ -55,25 +55,33 @@ if (!token) {
   return;
 }
 
-    Promise.all([
-      fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch("/api/goals", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-      fetch("/api/referral", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()),
-    ]).then(([userData, groupsData, txData, goalsData, notifData, refData]) => {
-      if (userData.success) {
-        setUser(userData.user);
-        localStorage.setItem("user", JSON.stringify(userData.user));
-      }
-      if (groupsData.success) setGroups(groupsData.groups);
-      if (txData.success) setTransactions(txData.transactions);
-      if (goalsData.success) setGoals(goalsData.goals);
-      if (notifData.success) setUnreadCount(notifData.unreadCount);
-      if (refData.success) setReferralCode(refData.referralCode);
-      setLoading(false);
-    });
+ Promise.all([
+  fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+  fetch("/api/groups", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+  fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+  fetch("/api/goals", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+  fetch("/api/notifications", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+  fetch("/api/referral", { headers: { Authorization: `Bearer ${token}` } }).then((r) => r.json()).catch(() => ({ success: false })),
+])
+  .then(([userData, groupsData, txData, goalsData, notifData, refData]) => {
+    if (userData.success) {
+      setUser(userData.user);
+      sessionStorage.setItem("user", JSON.stringify(userData.user));
+    } else if (userData.error === "Invalid token" || userData.error === "Unauthorized") {
+      window.location.href = "/auth/login";
+      return;
+    }
+    if (groupsData.success) setGroups(groupsData.groups);
+    if (txData.success) setTransactions(txData.transactions);
+    if (goalsData.success) setGoals(goalsData.goals);
+    if (notifData.success) setUnreadCount(notifData.unreadCount);
+    if (refData.success) setReferralCode(refData.referralCode);
+    setLoading(false);
+  })
+  .catch((err) => {
+    console.error("Dashboard fetch error:", err);
+    setLoading(false);
+  });
   }, []);
 
   const toggleDarkMode = () => {
