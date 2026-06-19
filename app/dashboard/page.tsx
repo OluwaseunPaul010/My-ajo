@@ -385,7 +385,7 @@ const pendingContributions = groups.length > 0
                   { icon: ArrowUpRight, label: "Invite Friends", action: handleShareInvite },
                   { icon: Send, label: "Send Money", href: "/wallet" },
                   { icon: Clock, label: "Reminders", href: "/reminders" },
-                  { icon: BellRing, label: "Notifications", href: "/reminders" },
+                  { icon: BellRing, label: "Notifications", href: "/notifications" },
                 ].map((action, i) =>
                   action.action ? (
                     <button key={i} onClick={action.action}

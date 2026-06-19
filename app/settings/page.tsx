@@ -54,20 +54,20 @@ export default function SettingsPage() {
     if (!token) { window.location.href = "/auth/login"; return; }
     if (token) {
       fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setUser(data.user);
-            setProfileForm({
-              fullName: data.user.fullName || "",
-              email: data.user.email || "",
-              phone: data.user.phone || "",
-            });
-            setTwoFAEnabled(data.user.twoFactorEnabled || false);
-            setPinSet(!!data.user.transactionPin);
-            localStorage.setItem("user", JSON.stringify(data.user));
-          }
-        });
+  .then((res) => res.json())
+  .then((data) => {
+    if (data.success) {
+      setUser(data.user);
+      setProfileForm({
+        fullName: data.user.fullName || "",
+        email: data.user.email || "",
+        phone: data.user.phone || "",
+      });
+      setTwoFAEnabled(data.user.twoFactorEnabled || false);
+      setPinSet(!!data.user.transactionPin);
+      sessionStorage.setItem("user", JSON.stringify(data.user));
+    }
+  });
     }
   }, []);
 

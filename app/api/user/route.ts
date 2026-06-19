@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
                       select: {
                         id: true,
                         fullName: true,
+                        email: true,
                         trustScore: true,
                       },
                     },
@@ -49,25 +50,36 @@ export async function GET(req: NextRequest) {
       ...m.group,
       myRole: m.role,
       myPayoutOrder: m.payoutOrder,
+      joinedAt: m.joinedAt,
     }));
 
-    const contributions = user.transactions.filter((t: any) => t.type === "debit" && t.groupId);
-    const totalContributed = contributions.reduce((sum: number, t: any) => sum + t.amount, 0);
-    const totalExpected = groups.reduce((sum: number, g: any) => sum + g.contribution, 0);
-    const missedContributions = Math.max(0, groups.length - contributions.length);
+    // Contribution overview
+    const groupContributions = user.transactions.filter(
+      (t: any) => t.type === "debit" && t.groupId && t.status === "completed"
+    );
+    const totalContributed = groupContributions.reduce(
+      (sum: number, t: any) => sum + t.amount, 0
+    );
+    const totalExpected = groups.length;
+    const paid = groupContributions.length;
+    const missed = Math.max(0, totalExpected - paid);
 
     const contributionOverview = {
-      paid: contributions.length,
-      totalExpected: groups.length,
+      paid,
+      totalExpected,
       totalContributed,
-      totalExpected: totalExpected,
-      missed: missedContributions,
-      pending: Math.max(0, groups.length - contributions.length),
-      percentage: groups.length > 0 ? Math.round((contributions.length / groups.length) * 100) : 0,
+      missed,
+      pending: Math.max(0, totalExpected - paid),
+      percentage: totalExpected > 0
+        ? Math.min(100, Math.round((paid / totalExpected) * 100))
+        : 0,
     };
 
+    // Upcoming payout
     const upcomingPayout = groups.reduce((best: any, group: any) => {
-      const myPosition = group.members?.findIndex((m: any) => m.userId === decoded.userId);
+      const myPosition = group.members?.findIndex(
+        (m: any) => m.userId === decoded.userId
+      );
       if (myPosition === 1) {
         return {
           amount: group.contribution * (group.members?.length || 1),
@@ -85,12 +97,18 @@ export async function GET(req: NextRequest) {
         fullName: user.fullName,
         email: user.email,
         phone: user.phone,
+        role: user.role,
         isVerified: user.isVerified,
         emailVerified: user.emailVerified,
         bvnVerified: user.bvnVerified,
-        kycStatus: user.kycStatus,
+        twoFactorEnabled: user.twoFactorEnabled,
+        transactionPin: !!user.transactionPin,
         trustScore: user.trustScore,
         streak: user.streak,
+        referralCode: user.referralCode,
+        referralEarnings: user.referralEarnings,
+        isPremium: user.isPremium,
+        createdAt: user.createdAt,
         wallet: user.wallet,
         groups,
         transactions: user.transactions,

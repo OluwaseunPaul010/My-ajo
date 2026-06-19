@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
         <link rel="apple-touch-icon" href="/icon-192x192.png" />
@@ -57,6 +57,21 @@ export default function RootLayout({
   `}
 </Script>
 <body>
+  <body>
+  <script dangerouslySetInnerHTML={{
+    __html: `
+      try {
+        const dark = localStorage.getItem('darkMode');
+        if (dark === 'true') {
+          document.documentElement.classList.add('dark');
+        }
+      } catch(e) {}
+    `
+  }} />
+  {children}
+  <FloatingChat />
+  ...
+</body>
   <FloatingChat />
   <Script id="tawk-to" strategy="afterInteractive">
     {`...`}
