@@ -31,3 +31,17 @@ body {
 .dark {
   color-scheme: dark;
 }
+
+@import "tailwindcss";
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.dark {
+  color-scheme: dark;
+}

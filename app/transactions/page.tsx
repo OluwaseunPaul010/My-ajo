@@ -4,7 +4,8 @@ import { useState, useEffect } from "react";
 import {
   Users, Wallet, TrendingUp, Bell, MessageCircle,
   Home, Settings, LogOut, Menu, X, Target, Shield,
-  ArrowUpRight, ArrowDownLeft, Search, Filter
+  ArrowUpRight, ArrowDownLeft, Search, Filter,
+  BarChart3, Activity, Gift
 } from "lucide-react";
 
 const navItems = [
@@ -13,19 +14,22 @@ const navItems = [
   { icon: Wallet, label: "Wallet", href: "/wallet" },
   { icon: TrendingUp, label: "Transactions", href: "/transactions", active: true },
   { icon: Bell, label: "Reminders", href: "/reminders" },
-{ icon: MessageCircle, label: "Messages", href: "/chat" },
+  { icon: MessageCircle, label: "Messages", href: "/chat" },
   { icon: Target, label: "Goals", href: "/goals" },
+  { icon: BarChart3, label: "Analytics", href: "/analytics" },
+  { icon: Gift, label: "Refer & Earn", href: "/referral" },
+  { icon: Activity, label: "Activity Log", href: "/activity" },
   { icon: Shield, label: "Support", href: "/support" },
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
 export default function TransactionsPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [transactions, setTransactions] = useState<any[]>([]);
-  const [filtered, setFiltered] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("all");
-  const [search, setSearch] = useState("");
   const [user, setUser] = useState<any>(null);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
   const [totalIn, setTotalIn] = useState(0);
   const [totalOut, setTotalOut] = useState(0);
 
@@ -35,38 +39,26 @@ export default function TransactionsPage() {
 
     const token = sessionStorage.getItem("token");
     if (!token) { window.location.href = "/auth/login"; return; }
-    if (token) {
-      fetch("/api/transactions", {
-        headers: { Authorization: `Bearer ${token}` },
+
+    fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.success) {
+          setTransactions(data.transactions);
+          setTotalIn(data.totalIn || 0);
+          setTotalOut(data.totalOut || 0);
+        }
+        setLoading(false);
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setTransactions(data.transactions);
-            setFiltered(data.transactions);
-            setTotalIn(data.totalIn);
-            setTotalOut(data.totalOut);
-          }
-        });
-    }
+      .catch(() => setLoading(false));
   }, []);
 
-  useEffect(() => {
-    let result = transactions;
-    if (activeTab !== "all") {
-      result = result.filter((tx) => tx.type === activeTab);
-    }
-    if (search) {
-      result = result.filter((tx) =>
-        tx.description.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    setFiltered(result);
-  }, [activeTab, search, transactions]);
+  const filtered = transactions
+    .filter((tx) => filter === "all" || tx.type === filter)
+    .filter((tx) => tx.description?.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-sm transform transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0 lg:static lg:inset-auto`}>
         <div className="flex flex-col h-full">
           <div className="flex items-center gap-2 px-6 py-5 border-b border-gray-100">
@@ -78,44 +70,44 @@ export default function TransactionsPage() {
               <X className="w-5 h-5 text-gray-400" />
             </button>
           </div>
-          <nav className="flex-1 px-4 py-6 space-y-1">
+          <nav className="flex-1 px-4 py-6 space-y-0.5 overflow-y-auto">
             {navItems.map((item, i) => (
               <a key={i} href={item.href}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all ${item.active ? "bg-emerald-500 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-emerald-500"}`}>
-                <item.icon className="w-5 h-5" />
-                {item.label}
-                {item.badge && (
-                  <span className="ml-auto text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-600">{item.badge}</span>
-                )}
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="truncate">{item.label}</span>
               </a>
             ))}
           </nav>
           <div className="px-4 py-4 border-t border-gray-100">
-            <div className="flex items-center gap-3 px-3 py-2">
+            <a href="/profile" className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors">
               <div className="w-9 h-9 bg-emerald-500 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                {user?.fullName?.split(" ").map((n: string) => n[0]).join("") || "U"}
+                {user?.fullName?.split(" ").map((n: string) => n[0]).join("").slice(0, 2) || "U"}
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-semibold text-gray-900 truncate">{user?.fullName || "User"}</div>
-                <div className="text-xs text-emerald-500">Premium Member</div>
+                <div className="text-xs text-emerald-500">View Profile</div>
               </div>
-              <button
-  onClick={() => {
-    sessionStorage.removeItem("token");
-    sessionStorage.removeItem("user");
-    window.location.href = "/auth/login";
-  }}
-  className="text-gray-400 hover:text-red-500 transition-colors">
-  <LogOut className="w-4 h-4" />
-</button>
-            </div>
+            </a>
+            <button
+              onClick={() => {
+                sessionStorage.removeItem("token");
+                sessionStorage.removeItem("user");
+                document.cookie = "token=; path=/; max-age=0";
+                window.location.href = "/auth/login";
+              }}
+              className="w-full mt-2 flex items-center gap-3 px-3 py-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition-colors text-sm font-medium">
+              <LogOut className="w-4 h-4" />
+              <span>Sign Out</span>
+            </button>
           </div>
         </div>
       </aside>
 
-      {sidebarOpen && <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />}
+      {sidebarOpen && (
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/20 z-40 lg:hidden" />
+      )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-100 px-4 lg:px-8 py-4 flex items-center gap-4">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden">
@@ -129,18 +121,18 @@ export default function TransactionsPage() {
 
         <main className="flex-1 p-4 lg:p-8 overflow-auto">
           {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
             {[
               { label: "Total Money In", value: `₦${totalIn.toLocaleString()}`, icon: ArrowDownLeft, color: "bg-emerald-100 text-emerald-500" },
-              { label: "Total Money Out", value: `₦${totalOut.toLocaleString()}`, icon: ArrowUpRight, color: "bg-red-50 text-red-500" },
-              { label: "Total Transactions", value: transactions.length.toString(), icon: TrendingUp, color: "bg-blue-50 text-blue-500" },
+              { label: "Total Money Out", value: `₦${totalOut.toLocaleString()}`, icon: ArrowUpRight, color: "bg-red-50 text-red-400" },
+              { label: "Total Transactions", value: transactions.length, icon: TrendingUp, color: "bg-blue-50 text-blue-500" },
             ].map((stat, i) => (
               <motion.div key={i}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm flex items-center gap-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${stat.color}`}>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0 ${stat.color}`}>
                   <stat.icon className="w-6 h-6" />
                 </div>
                 <div>
@@ -151,69 +143,76 @@ export default function TransactionsPage() {
             ))}
           </div>
 
-          {/* Filters */}
+          {/* Search + Filters */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="text" value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search transactions..."
-                    className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-gray-900" />
-                </div>
-                <div className="flex gap-2">
-                  {["all", "credit", "debit"].map((tab) => (
-                    <button key={tab} onClick={() => setActiveTab(tab)}
-                      className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors capitalize ${activeTab === tab ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
-                      {tab === "all" ? "All" : tab === "credit" ? "Money In" : "Money Out"}
-                    </button>
-                  ))}
-                </div>
+            <div className="p-4 border-b border-gray-100 space-y-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type="text" value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search transactions..."
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm text-gray-900" />
+              </div>
+              <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "credit", label: "Money In" },
+                  { id: "debit", label: "Money Out" },
+                ].map((f) => (
+                  <button key={f.id} onClick={() => setFilter(f.id)}
+                    className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors flex-shrink-0 ${filter === f.id ? "bg-emerald-500 text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                    {f.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Transactions List */}
-            <div className="divide-y divide-gray-50">
-              {filtered.length === 0 ? (
-                <div className="text-center py-16 text-gray-400">
-                  <TrendingUp className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
-                  <p className="font-medium text-gray-600">No transactions yet!</p>
-                  <p className="text-sm">Fund your wallet to get started.</p>
-                </div>
-              ) : (
-                filtered.map((tx: any, i: number) => (
+            {/* Transactions List - Card based (mobile friendly) */}
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="text-center py-16 text-gray-400">
+                <TrendingUp className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
+                <p className="font-medium text-gray-500">No transactions found</p>
+                <p className="text-sm">
+                  {search ? "Try a different search term" : "Fund your wallet to get started!"}
+                </p>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {filtered.map((tx: any, i: number) => (
                   <motion.div key={i}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.05 }}
-                    className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
+                    transition={{ delay: i * 0.02 }}
+                    className="flex items-center gap-3 px-4 sm:px-6 py-4 hover:bg-gray-50 transition-colors">
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${tx.type === "credit" ? "bg-emerald-100" : "bg-red-50"}`}>
                       {tx.type === "credit"
                         ? <ArrowDownLeft className="w-5 h-5 text-emerald-500" />
                         : <ArrowUpRight className="w-5 h-5 text-red-400" />}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-gray-900">{tx.description}</div>
-                      <div className="text-xs text-gray-400">
-                        {new Date(tx.createdAt).toLocaleDateString("en-NG", {
-                          day: "numeric", month: "short", year: "numeric",
-                          hour: "2-digit", minute: "2-digit"
-                        })}
+                      <p className="text-sm font-medium text-gray-900 truncate">{tx.description}</p>
+                      <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                        <span className="text-xs text-gray-400">
+                          {new Date(tx.createdAt).toLocaleDateString("en-NG", {
+                            day: "numeric", month: "short", year: "numeric"
+                          })}
+                        </span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${tx.status === "completed" ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
+                          {tx.status}
+                        </span>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <div className={`text-sm font-semibold ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>
-                        {tx.type === "credit" ? "+" : "-"}₦{tx.amount.toLocaleString()}
-                      </div>
-                      <div className={`text-xs ${tx.status === "completed" ? "text-emerald-400" : "text-amber-400"}`}>
-                        {tx.status}
-                      </div>
+                    <div className={`text-sm font-bold flex-shrink-0 ${tx.type === "credit" ? "text-emerald-500" : "text-red-400"}`}>
+                      {tx.type === "credit" ? "+" : "-"}₦{tx.amount?.toLocaleString()}
                     </div>
                   </motion.div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         </main>
       </div>

@@ -365,21 +365,21 @@ export default function SettingsPage() {
           )}
 
           {/* Tabs */}
-          <div className="flex gap-2 mb-6 flex-wrap">
-            {[
-              { id: "profile", label: "Profile", icon: User },
-              { id: "password", label: "Password", icon: Lock },
-              { id: "verification", label: "Verification", icon: Shield },
-              { id: "security", label: "Security", icon: ShieldCheck },
-              { id: "notifications", label: "Notifications", icon: Bell },
-            ].map((tab) => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors ${activeTab === tab.id ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
-                <tab.icon className="w-4 h-4" />
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          <div className="flex gap-2 mb-6 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+  {[
+    { id: "profile", label: "Profile", icon: User },
+    { id: "password", label: "Password", icon: Lock },
+    { id: "verification", label: "Verification", icon: Shield },
+    { id: "security", label: "Security", icon: ShieldCheck },
+    { id: "notifications", label: "Notifications", icon: Bell },
+  ].map((tab) => (
+    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-colors flex-shrink-0 ${activeTab === tab.id ? "bg-emerald-500 text-white" : "bg-white text-gray-500 border border-gray-200 hover:border-emerald-300"}`}>
+      <tab.icon className="w-4 h-4" />
+      {tab.label}
+    </button>
+  ))}
+</div>
 
           {/* Profile Tab */}
           {activeTab === "profile" && (

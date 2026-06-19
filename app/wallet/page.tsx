@@ -354,11 +354,11 @@ export default function WalletPage() {
 
       {/* Fund Modal */}
       {showFundModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+  <motion.div
+    initial={{ opacity: 0, y: 50 }}
+    animate={{ opacity: 1, y: 0 }}
+    className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full sm:max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900">Fund Wallet</h3>
               <button onClick={() => { setShowFundModal(false); setAmount(""); }}>
@@ -406,11 +406,11 @@ export default function WalletPage() {
 
       {/* Withdraw Modal */}
       {showWithdrawModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center">
+      <motion.div
+       initial={{ opacity: 0, y: 50 }}
+       animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full sm:max-w-md shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-lg font-bold text-gray-900">Withdraw Funds</h3>
               <button onClick={() => {

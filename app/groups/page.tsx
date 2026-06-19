@@ -160,7 +160,7 @@ export default function GroupsPage() {
           </div>
 
           {/* Groups Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {realGroups.length === 0 ? (
               <div className="col-span-3 text-center py-16 text-gray-400">
                 <Users className="w-12 h-12 mx-auto mb-3 text-emerald-300" />
