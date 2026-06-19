@@ -68,7 +68,6 @@ export default function RootLayout({
       } catch(e) {}
     `
   }} />
-  {children}
   <FloatingChat />
   ...
 </body>
